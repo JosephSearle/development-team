@@ -4,6 +4,28 @@ from __future__ import annotations
 
 import pytest
 from dev_team_state.schema import AgentResult, HITLApproval, OrchestratorState, Subtask, TaskStatus
+from langgraph.checkpoint.redis import AsyncRedisSaver
+from testcontainers.redis import RedisContainer
+
+
+@pytest.fixture(scope="session")
+def redis_container() -> RedisContainer:  # type: ignore[type-arg]
+    with RedisContainer("redis/redis-stack:latest") as container:
+        yield container
+
+
+@pytest.fixture(scope="session")
+def redis_url(redis_container: RedisContainer) -> str:  # type: ignore[type-arg]
+    host = redis_container.get_container_host_ip()
+    port = redis_container.get_exposed_port(6379)
+    return f"redis://{host}:{port}"
+
+
+@pytest.fixture()
+async def redis_saver(redis_url: str) -> AsyncRedisSaver:  # type: ignore[misc]
+    async with AsyncRedisSaver.from_conn_string(redis_url) as saver:
+        await saver.asetup()
+        yield saver
 
 
 @pytest.fixture()
