@@ -192,6 +192,7 @@ class TestOrchestratorState:
 
     def test_messages_reducer_is_add_messages(self) -> None:
         import typing
+
         from langgraph.graph.message import add_messages
         hints = typing.get_type_hints(OrchestratorState, include_extras=True)
         args = typing.get_args(hints["messages"])
