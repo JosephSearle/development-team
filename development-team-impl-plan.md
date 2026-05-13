@@ -262,20 +262,20 @@ Each agent follows strict Red → Green → Refactor:
 **Tasks:**
 
 **Guardrail (`shared/guardrail/`)**
-- [ ] TDD: write test that `GuardrailClient.screen(text)` returns `GuardrailResult(passed=True/False, category=...)`
-- [ ] Implement `GuardrailClient` as async HTTP client calling vLLM Llama-Guard-3-8B endpoint
-- [ ] Test: malicious injection string → `passed=False`; benign task → `passed=True`
-- [ ] Test: connection failure raises `GuardrailUnavailableError`, not swallowed
+- [x] TDD: write test that `GuardrailClient.screen(text)` returns `GuardrailResult(passed=True/False, category=...)`
+- [x] Implement `GuardrailClient` as async HTTP client calling vLLM Llama-Guard-3-8B endpoint
+- [x] Test: malicious injection string → `passed=False`; benign task → `passed=True`
+- [x] Test: connection failure raises `GuardrailUnavailableError`, not swallowed
 
 **Redis Checkpointer (`shared/state/`)**
-- [ ] TDD: write test using `AsyncRedisSaver.from_conn_string()` that write/read round-trips
-- [ ] Implement checkpointer factory: env-driven (`REDIS_URL`), falls back to `InMemorySaver` in test
-- [ ] Verify `asetup()` creates indices; `aget_tuple()` returns checkpoint after graph run
+- [x] TDD: write test using `AsyncRedisSaver.from_conn_string()` that write/read round-trips
+- [x] Implement checkpointer factory: env-driven (`REDIS_URL`), falls back to `InMemorySaver` in test
+- [x] Verify `asetup()` creates indices; `aget_tuple()` returns checkpoint after graph run
 
 **MCP Registry (`shared/mcp/`)**
-- [ ] TDD: write test that `MCPRegistry.build_client(["github", "jira"])` returns `MultiServerMCPClient` with correct server configs
-- [ ] Implement registry as config-driven dict (MCP server URL/transport per service)
-- [ ] Test: `get_tools(server_name="github")` returns tools list from mock MCP server
+- [x] TDD: write test that `MCPRegistry.build_client(["github", "jira"])` returns `MultiServerMCPClient` with correct server configs
+- [x] Implement registry as config-driven dict (MCP server URL/transport per service)
+- [x] Test: `get_tools(server_name="github")` returns tools list from mock MCP server
 
 **Verification:** `uv run pytest shared/` all green; mypy clean on all shared packages.
 

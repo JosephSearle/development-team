@@ -23,6 +23,7 @@ dev = [
   "pytest-asyncio>=0.24",
   "pytest-mock>=3.14",
   "pytest-httpx>=0.35",
+  "pytest-cov>=6",
   "testcontainers[redis]>=4.8",
   "ruff>=0.9",
   "mypy>=1.13",
@@ -50,4 +51,5 @@ testpaths = [
   "shared/state/tests",
   "shared/guardrail/tests",
   "shared/mcp/tests",
+  "agents/orchestrator/tests",
 ]

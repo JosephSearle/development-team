@@ -7,6 +7,7 @@ from enum import StrEnum
 from typing import Annotated
 
 from langchain_core.messages import AnyMessage
+from langgraph.graph.message import add_messages
 from typing_extensions import TypedDict
 
 
@@ -50,12 +51,7 @@ class HITLApproval(TypedDict):
 
 
 class OrchestratorState(TypedDict):
-    """Full LangGraph state for the Orchestrator agent graph.
-
-    Fields annotated with operator.add use the LangGraph reducer pattern —
-    new list values are appended rather than replaced. Required for
-    agent_results and messages which accumulate across sub-agent executions.
-    """
+    """Full LangGraph state for the Orchestrator agent graph."""
 
     task_id: str
     task_description: str
@@ -67,5 +63,5 @@ class OrchestratorState(TypedDict):
     branch_name: str
     pr_url: str | None
     status: TaskStatus
-    messages: Annotated[list[AnyMessage], operator.add]
+    messages: Annotated[list[AnyMessage], add_messages]
     guardrail_passed: bool
