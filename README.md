@@ -1,7 +1,7 @@
 # Development Team
 
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue?logo=python&logoColor=white)](https://www.python.org/downloads/release/python-3120/)
-[![DeepAgents 0.4.2](https://img.shields.io/badge/deepagents-0.4.2-blueviolet)](https://github.com/langchain-ai/deepagents)
+[![DeepAgents 0.6.1](https://img.shields.io/badge/deepagents-0.6.1-blueviolet)](https://github.com/langchain-ai/deepagents)
 [![LangGraph v1](https://img.shields.io/badge/langgraph-v1-green)](https://github.com/langchain-ai/langgraph)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 

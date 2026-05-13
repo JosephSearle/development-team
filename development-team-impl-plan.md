@@ -4,7 +4,14 @@
 
 This plan governs the greenfield implementation of the Agentic Development Team — an autonomous 12-agent AI system that writes, tests, reviews, and deploys code. The architecture is fully specified across 10 C4 documents, 6 ADRs, and a detailed system plan. No source code exists yet.
 
-**DeepAgents investigation outcome:** `deepagents` v0.4.1 (architecture docs anticipated 0.4.2) is confirmed published on PyPI by LangChain AI. The ADR was accurate: `create_deep_agent(model, tools, system_prompt)` returns a compiled LangGraph graph with built-in `write_todos` planning, virtual filesystem, context auto-summarisation, and sub-agent delegation via a `task` tool. Each of the 12 specialist agents is implemented as a `create_deep_agent()` instance with role-specific MCP tools and a system prompt. The Orchestrator is a LangGraph `StateGraph` supervisor that coordinates specialist sub-agents and enforces HITL gates on top of the deepagents harness.
+**DeepAgents version:** `deepagents>=0.6.1` (latest as of May 2026; plan was originally drafted against v0.4.1). The ADR was accurate: `create_deep_agent(model, tools, system_prompt)` returns a compiled LangGraph graph with built-in `write_todos` planning, virtual filesystem, context auto-summarisation, and sub-agent delegation via a `task` tool. Each of the 12 specialist agents is implemented as a `create_deep_agent()` instance with role-specific MCP tools and a system prompt. The Orchestrator is a LangGraph `StateGraph` supervisor that coordinates specialist sub-agents and enforces HITL gates on top of the deepagents harness.
+
+**New in 0.5.0–0.6.1 (impacts this plan):**
+- **`middleware` parameter**: `create_deep_agent()` now accepts a `middleware` list. Every specialist agent must include `ModelRetryMiddleware` (vLLM rate limits) and `ToolRetryMiddleware` (MCP network failures). See Key Library Patterns.
+- **`AsyncSubAgent`**: Non-blocking sub-agent dispatch. Relevant for specialist agents that spawn their own sub-tasks (Architecture Agent, Incident Response Agent). The Orchestrator uses LangGraph's native async node execution instead (it is a raw `StateGraph`, not a deepagents harness).
+- **`astream_events(version="v3")`**: Improved streaming semantics. Use this version string in Phase 2 streaming tests.
+- **Backend API change (deprecated in 0.5, removed in v0.7)**: `StateBackend`/`StoreBackend` must now be instantiated directly, not via a callable factory. Our plan uses LangGraph Redis checkpointing at the Orchestrator level (not deepagents backends), so this only affects specialist agents that opt into deepagents' own backend persistence.
+- **`CodeInterpreterMiddleware`** (experimental, 0.6.0): QuickJS/JS runtime — not applicable for Python agent execution; the Test Agent uses `uv run pytest` subprocess instead.
 
 All library patterns are sourced from current context7 and web documentation (May 2026).
 
@@ -109,7 +116,7 @@ name = "orchestrator"
 version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
-  "deepagents>=0.4.1",
+  "deepagents>=0.6.1",
   "langgraph>=1.0",
   "langchain-mcp-adapters>=0.1",
   "langgraph-checkpoint-redis>=0.3",
@@ -222,10 +229,10 @@ Each agent follows strict Red → Green → Refactor:
 **Goal:** Bootable workspace, CI green, team can contribute.
 
 **Tasks:**
-- [ ] Create root `pyproject.toml` with uv workspace declaration for all 15 members
-- [ ] Create `CLAUDE.md` with toolchain conventions and `uv run` commands
-- [ ] Create `.github/workflows/ci.yml`: lint → typecheck → unit tests → integration placeholder
-- [ ] Create `shared/state/src/dev_team_state/schema.py` with full `OrchestratorState` TypedDict:
+- [x] Create root `pyproject.toml` with uv workspace declaration for all 15 members
+- [x] Create `CLAUDE.md` with toolchain conventions and `uv run` commands
+- [x] Create `.github/workflows/ci.yml`: lint → typecheck → unit tests → integration placeholder
+- [x] Create `shared/state/src/dev_team_state/schema.py` with full `OrchestratorState` TypedDict:
   ```python
   class OrchestratorState(TypedDict):
       task_id: str
@@ -241,9 +248,9 @@ Each agent follows strict Red → Green → Refactor:
       messages: Annotated[list[AnyMessage], operator.add]
       guardrail_passed: bool
   ```
-- [ ] Write and pass schema tests (test that TypedDict keys exist and types match expectations)
-- [ ] Create `infra/docker/Dockerfile.agent` base image (UBI9 + Python 3.12 + uv)
-- [ ] Verify `uv sync --locked --all-extras --dev` installs cleanly
+- [x] Write and pass schema tests (test that TypedDict keys exist and types match expectations)
+- [x] Create `infra/docker/Dockerfile.agent` base image (UBI9 + Python 3.12 + uv)
+- [x] Verify `uv sync --locked --all-extras --dev` installs cleanly
 
 **Verification:** `uv run pytest` returns 0 exit code (schema tests pass); `uv run ruff check .` and `uv run mypy shared/` return clean.
 
@@ -311,6 +318,7 @@ Each agent follows strict Red → Green → Refactor:
    - [ ] TDD: full graph smoke test — planner → router → HITL gate → sub-agent (mocked) → END
    - [ ] Compile with `AsyncRedisSaver` in prod, `InMemorySaver` in tests
    - [ ] Test streaming: `graph.astream(..., stream_mode=["messages", "updates"])` yields expected chunks
+   - [ ] Test `astream_events(version="v3")` yields agent-level events (required for LangSmith trace correlation in Phase 6)
 
 **Verification:** `uv run pytest agents/orchestrator/tests -v` all green; 80%+ line coverage.
 
@@ -343,7 +351,7 @@ Each agent follows strict Red → Green → Refactor:
 - [ ] Implement `CodeAgentState` with `tdd_phase`, `context7_docs`, `codebase_search_results`, `written_code`
 - [ ] Implement `context7_client` node: calls Context7 MCP via `MultiServerMCPClient`, caches responses (15-min TTL)
 - [ ] Implement `codebase_search` node: calls Milvus MCP, returns semantically similar existing code
-- [ ] Implement `code_writer` node: calls code tier (Qwen2.5-Coder-32B) via `create_deep_agent()`
+- [ ] Implement `code_writer` node: calls code tier (Qwen2.5-Coder-32B) via `create_deep_agent()` with `ModelRetryMiddleware` + `ToolRetryMiddleware` (see Key Library Patterns)
 - [ ] Implement `code_refactorer` node (activated only when `tdd_phase == REFACTOR`)
 - [ ] Implement inter-agent communication: Code Agent receives `tests.red` event, transitions to writing
 
@@ -353,7 +361,7 @@ Each agent follows strict Red → Green → Refactor:
 - [ ] TDD: write test that agent only activates after `tests.green` event
 - [ ] TDD: write test that PR diff is passed to reasoning tier; structured review JSON is returned
 - [ ] TDD: write test that `scan.complete` event gates entry (Security Agent must have run first)
-- [ ] Implement: calls reasoning tier (Qwen3.5-72B) with diff, returns `CodeReviewResult` with approve/reject/comments
+- [ ] Implement: calls reasoning tier (Qwen3.5-72B) with diff via `create_deep_agent()` with `ModelRetryMiddleware` + `ToolRetryMiddleware`; returns `CodeReviewResult` with approve/reject/comments
 
 **Verification:** `uv run pytest agents/test_agent/ agents/code_agent/ agents/code_review_agent/` all green.
 
@@ -367,7 +375,7 @@ Each agent follows strict Red → Green → Refactor:
 - [ ] TDD: `commit_creator` node → constructs conventional commit message, calls GitHub MCP
 - [ ] TDD: `pr_creator` node → creates PR with test results summary in body
 - [ ] TDD: `pr_merger` node → only fires after `pr.approved` event + HITL approval for main branch
-- [ ] Implement using `create_deep_agent()` with GitHub MCP tools
+- [ ] Implement using `create_deep_agent()` with GitHub MCP tools + `ModelRetryMiddleware` + `ToolRetryMiddleware`
 - [ ] All git operations mocked via `mock_mcp_tools` fixture in tests
 
 #### Security Agent (`agents/security_agent/`)
@@ -381,13 +389,13 @@ Each agent follows strict Red → Green → Refactor:
 - [ ] TDD: `pipeline_trigger` node → calls Jenkins MCP with pipeline name and branch
 - [ ] TDD: `pipeline_monitor` node → polls build status; emits `deployment.staging_complete` when green
 - [ ] TDD: production deploy → HITL gate required (agent cannot proceed without Orchestrator approval)
-- [ ] Implement using Jenkins MCP and async polling with exponential backoff
+- [ ] Implement using `create_deep_agent()` with Jenkins MCP + `ModelRetryMiddleware` + `ToolRetryMiddleware`; async polling with exponential backoff
 
 #### Infrastructure Agent (`agents/infrastructure_agent/`)
 - [ ] TDD: infrastructure changes → committed to GitOps repo (calls Git MCP), NOT `kubectl apply`
 - [ ] TDD: `manifest_writer` node → produces valid Kubernetes YAML given a resource spec
 - [ ] TDD: ArgoCD MCP called to trigger sync after Git commit
-- [ ] Implement: agent writes Helm values / kustomize patches, commits, signals ArgoCD
+- [ ] Implement: `create_deep_agent()` with Git MCP + ArgoCD MCP + `ModelRetryMiddleware` + `ToolRetryMiddleware`; writes Helm values / kustomize patches, commits, signals ArgoCD
 
 **Verification:** `uv run pytest agents/git_agent/ agents/security_agent/ agents/cicd_agent/ agents/infrastructure_agent/` all green.
 
@@ -400,13 +408,15 @@ Each agent follows strict Red → Green → Refactor:
 - [ ] TDD: produces ADR Markdown from template given a decision input (test ADR schema completeness)
 - [ ] TDD: HITL gate fires for any architectural decision before ADR is committed
 - [ ] TDD: agent queries Context7 for library documentation before evaluating options
-- [ ] Implement: reasoning tier (Qwen3.5-72B) via `create_deep_agent()`; ADR template loaded from Skills repository
+- [ ] Implement: reasoning tier (Qwen3.5-72B) via `create_deep_agent()` with `ModelRetryMiddleware` + `ToolRetryMiddleware`; ADR template loaded from Skills repository
+- [ ] TDD: write test that `AsyncSubAgent` delegation is used for long-running research sub-tasks (e.g. library evaluation); assert non-blocking dispatch
+- [ ] Implement `AsyncSubAgent` specs for research sub-tasks using ASGI transport (co-deployed)
 
 #### Documentation Agent (`agents/docs_agent/`)
 - [ ] TDD: generates README section from code + docstrings (test structure/headings)
 - [ ] TDD: generates OpenAPI spec from route definitions (test spec validity with `jsonschema`)
 - [ ] TDD: generates changelog entry from git log (test conventional commit parsing)
-- [ ] Implement: utility tier (Qwen2.5-14B) via `create_deep_agent()` with Jinja2 templates for structured doc output
+- [ ] Implement: utility tier (Qwen2.5-14B) via `create_deep_agent()` with Jinja2 templates + `ModelRetryMiddleware` + `ToolRetryMiddleware` for structured doc output
 
 #### Dependency Agent (`agents/dependency_agent/`)
 - [ ] TDD: parses `uv.lock` and identifies packages with CVEs (mock NVD API response)
@@ -419,7 +429,9 @@ Each agent follows strict Red → Green → Refactor:
 - [ ] TDD: queries PostgreSQL MCP (read-only) for diagnostic queries
 - [ ] TDD: produces remediation runbook as structured output
 - [ ] TDD: HITL gate for any remediation that modifies production state
-- [ ] Implement: reasoning tier (Qwen3.5-72B) via `create_deep_agent()`; PostgreSQL MCP in read-only mode only
+- [ ] Implement: reasoning tier (Qwen3.5-72B) via `create_deep_agent()` with `ModelRetryMiddleware` + `ToolRetryMiddleware`; PostgreSQL MCP in read-only mode only
+- [ ] TDD: write test that `AsyncSubAgent` delegation is used for parallel diagnostic sub-tasks (log analysis, metric queries); assert non-blocking dispatch
+- [ ] Implement `AsyncSubAgent` specs for diagnostic sub-tasks using ASGI transport
 
 **Verification:** `uv run pytest agents/architecture_agent/ agents/docs_agent/ agents/dependency_agent/ agents/incident_response_agent/` all green.
 
@@ -477,6 +489,7 @@ Each agent follows strict Red → Green → Refactor:
 ### DeepAgents specialist agent (every non-Orchestrator agent)
 ```python
 from deepagents import create_deep_agent
+from langchain.agents.middleware import ModelRetryMiddleware, ToolRetryMiddleware
 from langchain.chat_models import init_chat_model
 from dev_team_mcp.registry import MCPRegistry
 
@@ -494,7 +507,39 @@ async def build_code_agent():
         model=model,
         tools=tools,
         system_prompt=CODE_AGENT_SYSTEM_PROMPT,
+        middleware=[
+            # Retry vLLM rate limits and transient 5xx errors
+            ModelRetryMiddleware(max_retries=3, backoff_factor=2.0, initial_delay=1.0),
+            # Retry MCP tool calls on network failures
+            ToolRetryMiddleware(max_retries=2, retry_on=(TimeoutError, ConnectionError)),
+        ],
     )
+```
+
+### DeepAgents async sub-agent delegation (Architecture Agent, Incident Response Agent)
+```python
+from deepagents import AsyncSubAgent, create_deep_agent
+
+# Declare async sub-agents for non-blocking parallel sub-tasks
+async_subagents = [
+    AsyncSubAgent(
+        name="library_researcher",
+        description="Fetches and evaluates library documentation from Context7",
+        graph_id="library_researcher",
+        # No url → ASGI in-process transport (co-deployed in same pod)
+    ),
+]
+
+agent = create_deep_agent(
+    model=model,
+    tools=tools,
+    system_prompt=ARCHITECTURE_AGENT_SYSTEM_PROMPT,
+    subagents=async_subagents,
+    middleware=[
+        ModelRetryMiddleware(max_retries=3, backoff_factor=2.0, initial_delay=1.0),
+        ToolRetryMiddleware(max_retries=2, retry_on=(TimeoutError, ConnectionError)),
+    ],
+)
 ```
 
 ### LangGraph Orchestrator supervisor graph
