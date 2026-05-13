@@ -1,5 +1,6 @@
-"""Shared LangGraph state schemas for the Agentic Development Team."""
+"""Shared LangGraph state schemas and checkpointer factory for the Agentic Development Team."""
 
+from dev_team_state.checkpointer import get_checkpointer
 from dev_team_state.schema import (
     AgentResult,
     HITLApproval,
@@ -14,4 +15,5 @@ __all__ = [
     "OrchestratorState",
     "Subtask",
     "TaskStatus",
+    "get_checkpointer",
 ]
