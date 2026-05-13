@@ -1,0 +1,46 @@
+[tool.uv.workspace]
+members = [
+  "shared/state",
+  "shared/guardrail",
+  "shared/mcp",
+  "agents/orchestrator",
+  "agents/code_agent",
+  "agents/test_agent",
+  "agents/code_review_agent",
+  "agents/git_agent",
+  "agents/architecture_agent",
+  "agents/cicd_agent",
+  "agents/security_agent",
+  "agents/docs_agent",
+  "agents/infrastructure_agent",
+  "agents/dependency_agent",
+  "agents/incident_response_agent",
+]
+
+[dependency-groups]
+dev = [
+  "pytest>=8",
+  "pytest-asyncio>=0.24",
+  "pytest-mock>=3.14",
+  "ruff>=0.9",
+  "mypy>=1.13",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "ANN"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**" = ["ANN"]
+"**/__init__.py" = ["ANN", "F401"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["shared/state/tests"]

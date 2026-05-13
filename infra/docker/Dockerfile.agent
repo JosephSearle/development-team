@@ -1,0 +1,35 @@
+# Base agent image: Red Hat UBI 9 Minimal + Python 3.12 + uv
+# Each specialist agent container extends this base with its own pip install layer.
+#
+# Build: docker build -f infra/docker/Dockerfile.agent -t dev-team-agent-base:latest .
+FROM registry.access.redhat.com/ubi9/ubi-minimal:latest AS base
+
+# UBI9 minimal uses microdnf (not dnf)
+RUN microdnf install -y \
+    python3.12 \
+    python3.12-pip \
+    ca-certificates \
+    git \
+    && microdnf clean all \
+    && rm -rf /var/cache/yum
+
+# Pin uv version for reproducible builds
+ENV UV_VERSION=0.5.29
+RUN python3.12 -m pip install --no-cache-dir "uv==${UV_VERSION}"
+
+# UID 1001 + GID 0 is the OpenShift-compatible non-root pattern:
+# OpenShift runs pods with arbitrary UIDs in the root group by default.
+RUN useradd --uid 1001 --gid 0 --no-create-home --shell /sbin/nologin agentuser
+
+WORKDIR /app
+
+# Install packages into system Python (no venv needed in containers)
+ENV UV_SYSTEM_PYTHON=1 \
+    UV_NO_CACHE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+USER 1001
+
+# CMD is intentionally omitted — each agent image overrides with its own entrypoint.
+# Example: CMD ["python", "-m", "orchestrator"]
