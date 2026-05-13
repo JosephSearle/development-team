@@ -35,8 +35,10 @@ jobs:
         run: uv python install 3.12
       - name: Install dependencies
         run: uv sync --locked --all-extras --dev
-      - name: Run mypy
+      - name: Run mypy (shared)
         run: uv run mypy shared/
+      - name: Run mypy (orchestrator)
+        run: uv run mypy agents/orchestrator/src
 
   unit-test:
     name: Unit Tests
@@ -52,7 +54,7 @@ jobs:
       - name: Install dependencies
         run: uv sync --locked --all-extras --dev
       - name: Run pytest
-        run: uv run pytest shared/ -v --tb=short
+        run: uv run pytest shared/ agents/orchestrator/tests/ -v --tb=short --cov=orchestrator --cov-fail-under=80
 
   integration:
     name: Integration Tests (placeholder)

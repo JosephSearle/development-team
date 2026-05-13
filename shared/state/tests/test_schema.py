@@ -189,3 +189,11 @@ class TestOrchestratorState:
 
     def test_messages_field_is_list(self, minimal_state: OrchestratorState) -> None:
         assert isinstance(minimal_state["messages"], list)
+
+    def test_messages_reducer_is_add_messages(self) -> None:
+        import typing
+
+        from langgraph.graph.message import add_messages
+        hints = typing.get_type_hints(OrchestratorState, include_extras=True)
+        args = typing.get_args(hints["messages"])
+        assert args[1] is add_messages
