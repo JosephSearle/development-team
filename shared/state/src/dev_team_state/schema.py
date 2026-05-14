@@ -50,6 +50,39 @@ class HITLApproval(TypedDict):
     timestamp: str | None
 
 
+class TDDPhase(StrEnum):
+    """Phase of the Red → Green → Refactor TDD state machine."""
+
+    SETUP = "setup"
+    RED = "red"
+    GREEN = "green"
+    REFACTOR = "refactor"
+
+
+class TestRunResult(TypedDict):
+    """Structured output from a pytest subprocess run."""
+
+    exit_code: int
+    passed: int
+    failed: int
+    errors: int
+    duration_seconds: float
+    coverage_line_pct: float | None
+    coverage_branch_pct: float | None
+    failure_details: list[str]
+    raw_output: str
+
+
+class CodeReviewResult(TypedDict):
+    """Structured output from the Code Review Agent."""
+
+    approved: bool
+    reviewer_model: str
+    comments: list[str]
+    blocking_issues: list[str]
+    metadata: dict[str, object]
+
+
 class OrchestratorState(TypedDict):
     """Full LangGraph state for the Orchestrator agent graph."""
 

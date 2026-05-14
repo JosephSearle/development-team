@@ -11,10 +11,13 @@ from typing import get_type_hints
 
 from dev_team_state.schema import (
     AgentResult,
+    CodeReviewResult,
     HITLApproval,
     OrchestratorState,
     Subtask,
     TaskStatus,
+    TDDPhase,
+    TestRunResult,
 )
 
 
@@ -197,3 +200,114 @@ class TestOrchestratorState:
         hints = typing.get_type_hints(OrchestratorState, include_extras=True)
         args = typing.get_args(hints["messages"])
         assert args[1] is add_messages
+
+
+class TestTDDPhase:
+    def test_all_four_values_defined(self) -> None:
+        assert len(TDDPhase) == 4
+
+    def test_values_are_correct_strings(self) -> None:
+        assert TDDPhase.SETUP.value == "setup"
+        assert TDDPhase.RED.value == "red"
+        assert TDDPhase.GREEN.value == "green"
+        assert TDDPhase.REFACTOR.value == "refactor"
+
+    def test_is_str_subclass(self) -> None:
+        assert issubclass(TDDPhase, str)
+
+
+class TestTestRunResult:
+    EXPECTED_KEYS = {
+        "exit_code",
+        "passed",
+        "failed",
+        "errors",
+        "duration_seconds",
+        "coverage_line_pct",
+        "coverage_branch_pct",
+        "failure_details",
+        "raw_output",
+    }
+
+    def test_all_keys_present(self) -> None:
+        assert set(TestRunResult.__annotations__) == self.EXPECTED_KEYS
+
+    def test_exit_code_is_int(self) -> None:
+        assert get_type_hints(TestRunResult)["exit_code"] is int
+
+    def test_coverage_line_pct_accepts_none(self) -> None:
+        result = TestRunResult(
+            exit_code=1,
+            passed=0,
+            failed=3,
+            errors=0,
+            duration_seconds=1.5,
+            coverage_line_pct=None,
+            coverage_branch_pct=None,
+            failure_details=["test_foo"],
+            raw_output="FAILED test_foo",
+        )
+        assert result["coverage_line_pct"] is None
+        assert result["coverage_branch_pct"] is None
+
+    def test_failure_details_is_list(self) -> None:
+        result = TestRunResult(
+            exit_code=0,
+            passed=5,
+            failed=0,
+            errors=0,
+            duration_seconds=0.8,
+            coverage_line_pct=85.0,
+            coverage_branch_pct=72.0,
+            failure_details=[],
+            raw_output="5 passed",
+        )
+        assert isinstance(result["failure_details"], list)
+
+    def test_instantiable_with_coverage(self) -> None:
+        result = TestRunResult(
+            exit_code=0,
+            passed=5,
+            failed=0,
+            errors=0,
+            duration_seconds=0.8,
+            coverage_line_pct=85.0,
+            coverage_branch_pct=72.0,
+            failure_details=[],
+            raw_output="5 passed",
+        )
+        assert result["passed"] == 5
+        assert result["coverage_line_pct"] is not None
+        assert result["coverage_line_pct"] > 80.0
+
+
+class TestCodeReviewResult:
+    EXPECTED_KEYS = {"approved", "reviewer_model", "comments", "blocking_issues", "metadata"}
+
+    def test_all_keys_present(self) -> None:
+        assert set(CodeReviewResult.__annotations__) == self.EXPECTED_KEYS
+
+    def test_approved_is_bool(self) -> None:
+        assert get_type_hints(CodeReviewResult)["approved"] is bool
+
+    def test_comments_accepts_empty_list(self) -> None:
+        result = CodeReviewResult(
+            approved=True,
+            reviewer_model="qwen3.5-72b",
+            comments=[],
+            blocking_issues=[],
+            metadata={},
+        )
+        assert result["comments"] == []
+        assert result["blocking_issues"] == []
+
+    def test_instantiable_with_rejection(self) -> None:
+        result = CodeReviewResult(
+            approved=False,
+            reviewer_model="qwen3.5-72b",
+            comments=["Missing error handling"],
+            blocking_issues=["No input validation"],
+            metadata={"confidence": 0.9},
+        )
+        assert result["approved"] is False
+        assert len(result["blocking_issues"]) == 1

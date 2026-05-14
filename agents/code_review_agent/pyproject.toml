@@ -2,11 +2,23 @@
 name = "code-review-agent"
 version = "0.1.0"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "langgraph>=0.3",
+    "langchain>=0.3",
+    "langchain-core>=0.3",
+    "langchain-openai>=0.3",
+    "deepagents>=0.6.1",
+    "dev-team-state",
+    "dev-team-mcp",
+]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.uv.sources]
+dev-team-state = { workspace = true }
+dev-team-mcp = { workspace = true }
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/code_review_agent"]

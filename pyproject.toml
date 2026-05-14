@@ -47,9 +47,14 @@ exclude = ["shared/.*/tests/.*", "agents/.*/tests/.*"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+addopts = "--import-mode=importlib"
+filterwarnings = ["ignore::pytest.PytestCollectionWarning"]
 testpaths = [
   "shared/state/tests",
   "shared/guardrail/tests",
   "shared/mcp/tests",
   "agents/orchestrator/tests",
+  "agents/test_agent/tests",
+  "agents/code_agent/tests",
+  "agents/code_review_agent/tests",
 ]
