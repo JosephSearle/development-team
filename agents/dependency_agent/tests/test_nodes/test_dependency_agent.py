@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
-from langchain.agents.middleware import SummarizationMiddleware
 from dependency_agent.nodes.dependency_agent import dependency_agent_node
 from dependency_agent.schema import DependencyAgentState
+from langchain.agents.middleware import SummarizationMiddleware
 
 
 class TestDependencyAgentDeepAgentConfig:
@@ -111,6 +111,7 @@ class TestDependencyAgentPRUrlExtraction:
         monkeypatch: object,
     ) -> None:
         from unittest.mock import AsyncMock
+
         from langchain_core.messages import AIMessage
 
         mock_deep_agent_dependency.return_value.ainvoke = AsyncMock(

@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock
 
-from langchain.agents.middleware import SummarizationMiddleware
-from langchain_core.messages import AIMessage
 from incident_response_agent.nodes.incident_response_agent import incident_response_agent_node
 from incident_response_agent.schema import IncidentResponseAgentState
+from langchain.agents.middleware import SummarizationMiddleware
+from langchain_core.messages import AIMessage
 
 
 class TestIncidentResponseAgentDeepAgentConfig:
@@ -113,7 +113,7 @@ class TestIncidentResponseAgentOutputExtraction:
     ) -> None:
         mock_deep_agent_incident.return_value.ainvoke = AsyncMock(
             return_value={
-                "messages": [AIMessage(content="Root cause identified: OOMKilled. Awaiting approval.")]
+                "messages": [AIMessage(content="Root cause identified: OOMKilled. Awaiting approval.")]  # noqa: E501
             }
         )
         result = await incident_response_agent_node(minimal_incident_agent_state)
