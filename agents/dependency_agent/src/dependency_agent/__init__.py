@@ -1,1 +1,1 @@
-"""Dependency Agent — implemented in Phase 5."""
+"""Dependency Agent — Phase 5c Intelligence Domain."""

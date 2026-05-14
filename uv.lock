@@ -83,6 +83,26 @@ wheels = [
 name = "architecture-agent"
 version = "0.1.0"
 source = { editable = "agents/architecture_agent" }
+dependencies = [
+    { name = "deepagents" },
+    { name = "dev-team-mcp" },
+    { name = "dev-team-state" },
+    { name = "langchain" },
+    { name = "langchain-core" },
+    { name = "langchain-openai" },
+    { name = "langgraph" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "deepagents", specifier = ">=0.6.1" },
+    { name = "dev-team-mcp", editable = "shared/mcp" },
+    { name = "dev-team-state", editable = "shared/state" },
+    { name = "langchain", specifier = ">=1.0" },
+    { name = "langchain-core", specifier = ">=1.0" },
+    { name = "langchain-openai", specifier = ">=1.0" },
+    { name = "langgraph", specifier = ">=1.0" },
+]
 
 [[package]]
 name = "ast-serialize"
@@ -535,6 +555,26 @@ wheels = [
 name = "dependency-agent"
 version = "0.1.0"
 source = { editable = "agents/dependency_agent" }
+dependencies = [
+    { name = "deepagents" },
+    { name = "dev-team-mcp" },
+    { name = "dev-team-state" },
+    { name = "langchain" },
+    { name = "langchain-core" },
+    { name = "langchain-openai" },
+    { name = "langgraph" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "deepagents", specifier = ">=0.6.1" },
+    { name = "dev-team-mcp", editable = "shared/mcp" },
+    { name = "dev-team-state", editable = "shared/state" },
+    { name = "langchain", specifier = ">=1.0" },
+    { name = "langchain-core", specifier = ">=1.0" },
+    { name = "langchain-openai", specifier = ">=1.0" },
+    { name = "langgraph", specifier = ">=1.0" },
+]
 
 [[package]]
 name = "dev-team-guardrail"
@@ -604,6 +644,26 @@ wheels = [
 name = "docs-agent"
 version = "0.1.0"
 source = { editable = "agents/docs_agent" }
+dependencies = [
+    { name = "deepagents" },
+    { name = "dev-team-mcp" },
+    { name = "dev-team-state" },
+    { name = "langchain" },
+    { name = "langchain-core" },
+    { name = "langchain-openai" },
+    { name = "langgraph" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "deepagents", specifier = ">=0.6.1" },
+    { name = "dev-team-mcp", editable = "shared/mcp" },
+    { name = "dev-team-state", editable = "shared/state" },
+    { name = "langchain", specifier = ">=1.0" },
+    { name = "langchain-core", specifier = ">=1.0" },
+    { name = "langchain-openai", specifier = ">=1.0" },
+    { name = "langgraph", specifier = ">=1.0" },
+]
 
 [[package]]
 name = "docstring-parser"
@@ -746,6 +806,26 @@ wheels = [
 name = "incident-response-agent"
 version = "0.1.0"
 source = { editable = "agents/incident_response_agent" }
+dependencies = [
+    { name = "deepagents" },
+    { name = "dev-team-mcp" },
+    { name = "dev-team-state" },
+    { name = "langchain" },
+    { name = "langchain-core" },
+    { name = "langchain-openai" },
+    { name = "langgraph" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "deepagents", specifier = ">=0.6.1" },
+    { name = "dev-team-mcp", editable = "shared/mcp" },
+    { name = "dev-team-state", editable = "shared/state" },
+    { name = "langchain", specifier = ">=1.0" },
+    { name = "langchain-core", specifier = ">=1.0" },
+    { name = "langchain-openai", specifier = ">=1.0" },
+    { name = "langgraph", specifier = ">=1.0" },
+]
 
 [[package]]
 name = "infrastructure-agent"

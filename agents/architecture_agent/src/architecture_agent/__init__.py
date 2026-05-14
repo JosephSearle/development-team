@@ -1,1 +1,1 @@
-"""Architecture Agent — implemented in Phase 5."""
+"""Architecture Agent — Phase 5a Intelligence Domain."""

@@ -14,6 +14,7 @@ _KNOWN_SERVERS: set[str] = {
     "sonarqube",
     "jenkins",
     "slack",
+    "kubernetes",
 }
 
 
