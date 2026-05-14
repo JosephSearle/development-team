@@ -39,6 +39,12 @@ jobs:
         run: uv run mypy shared/
       - name: Run mypy (orchestrator)
         run: uv run mypy agents/orchestrator/src
+      - name: Run mypy (test_agent)
+        run: uv run mypy agents/test_agent/src
+      - name: Run mypy (code_agent)
+        run: uv run mypy agents/code_agent/src
+      - name: Run mypy (code_review_agent)
+        run: uv run mypy agents/code_review_agent/src
 
   unit-test:
     name: Unit Tests
@@ -54,7 +60,7 @@ jobs:
       - name: Install dependencies
         run: uv sync --locked --all-extras --dev
       - name: Run pytest
-        run: uv run pytest shared/ agents/orchestrator/tests/ -v --tb=short --cov=orchestrator --cov-fail-under=80
+        run: uv run pytest shared/ agents/orchestrator/tests/ agents/test_agent/tests/ agents/code_agent/tests/ agents/code_review_agent/tests/ -v --tb=short --cov=orchestrator --cov=test_agent --cov=code_agent --cov=code_review_agent --cov-fail-under=80
 
   integration:
     name: Integration Tests (placeholder)

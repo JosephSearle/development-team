@@ -23,14 +23,12 @@ _ALL_SERVERS = {
     "context7",
     "sonarqube",
     "jenkins",
-    "argocd",
-    "milvus",
-    "postgres",
+    "slack",
 }
 
 
 class TestMCPRegistryKnownServers:
-    def test_all_eight_servers_registered(self) -> None:
+    def test_all_six_servers_registered(self) -> None:
         assert MCPRegistry.SERVERS == _ALL_SERVERS
 
     def test_each_server_has_url_and_transport(self) -> None:
@@ -63,9 +61,9 @@ class TestMCPRegistryBuildClient:
         with pytest.raises(ValueError, match="Unknown MCP servers"):
             MCPRegistry.build_client(["nonexistent"])
 
-    def test_build_client_with_empty_list_raises_value_error(self) -> None:
-        with pytest.raises(ValueError):
-            MCPRegistry.build_client([])
+    def test_build_client_with_empty_list_returns_client(self) -> None:
+        client = MCPRegistry.build_client([])
+        assert isinstance(client, MultiServerMCPClient)
 
     def test_build_client_uses_env_var_override(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("MCP_GITHUB_URL", "http://override:9090/mcp")

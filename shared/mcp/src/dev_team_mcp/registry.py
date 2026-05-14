@@ -13,9 +13,7 @@ _KNOWN_SERVERS: set[str] = {
     "context7",
     "sonarqube",
     "jenkins",
-    "argocd",
-    "milvus",
-    "postgres",
+    "slack",
 }
 
 
@@ -25,7 +23,7 @@ class MCPRegistry:
     @classmethod
     def build_client(cls, server_names: list[str]) -> MultiServerMCPClient:
         if not server_names:
-            raise ValueError("server_names must not be empty")
+            return MultiServerMCPClient({})
         unknown = set(server_names) - cls.SERVERS
         if unknown:
             raise ValueError(f"Unknown MCP servers: {unknown}")
