@@ -1,1 +1,1 @@
-"""Docs Agent — implemented in Phase 5."""
+"""Documentation Agent — Phase 5b Intelligence Domain."""

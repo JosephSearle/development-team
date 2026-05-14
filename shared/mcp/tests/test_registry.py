@@ -24,12 +24,22 @@ _ALL_SERVERS = {
     "sonarqube",
     "jenkins",
     "slack",
+    "kubernetes",
 }
 
 
 class TestMCPRegistryKnownServers:
-    def test_all_six_servers_registered(self) -> None:
+    def test_all_seven_servers_registered(self) -> None:
         assert MCPRegistry.SERVERS == _ALL_SERVERS
+
+    def test_kubernetes_server_registered(self) -> None:
+        assert "kubernetes" in MCPRegistry.SERVERS
+
+    def test_build_client_with_kubernetes_does_not_raise(self) -> None:
+        from langchain_mcp_adapters.client import MultiServerMCPClient
+
+        client = MCPRegistry.build_client(["kubernetes"])
+        assert isinstance(client, MultiServerMCPClient)
 
     def test_each_server_has_url_and_transport(self) -> None:
         for name in MCPRegistry.SERVERS:

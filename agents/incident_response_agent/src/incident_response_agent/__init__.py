@@ -1,1 +1,1 @@
-"""Incident Response Agent — implemented in Phase 5."""
+"""Incident Response Agent — Phase 5d Intelligence Domain."""
