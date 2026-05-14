@@ -5,7 +5,10 @@
       "Bash(git -C /Users/josephsearle/Documents/Projects/development-team status)",
       "Bash(git -C /Users/josephsearle/Documents/Projects/development-team log --oneline -3)",
       "Bash(git -C /Users/josephsearle/Documents/Projects/development-team commit -m ' *)",
-      "Bash(grep -v \"^$\")"
+      "Bash(grep -v \"^$\")",
+      "Bash(tree -L 3 -d /Users/josephsearle/Documents/Projects/development-team --ignore \".git|.pytest_cache|.mypy_cache|.ruff_cache|.venv\")",
+      "Bash(grep -E \"^/Users.*/\\(shared|agents\\)$|^/Users.*/\\(shared|agents\\)/[^/]+$\")",
+      "Bash(grep -A2 \"^name = \\\\\"langchain\\\\\"$\" /Users/josephsearle/Documents/Projects/development-team/uv.lock)"
     ]
   }
 }

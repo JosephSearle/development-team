@@ -283,6 +283,26 @@ wheels = [
 name = "cicd-agent"
 version = "0.1.0"
 source = { editable = "agents/cicd_agent" }
+dependencies = [
+    { name = "deepagents" },
+    { name = "dev-team-mcp" },
+    { name = "dev-team-state" },
+    { name = "langchain" },
+    { name = "langchain-core" },
+    { name = "langchain-openai" },
+    { name = "langgraph" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "deepagents", specifier = ">=0.6.1" },
+    { name = "dev-team-mcp", editable = "shared/mcp" },
+    { name = "dev-team-state", editable = "shared/state" },
+    { name = "langchain", specifier = ">=1.0" },
+    { name = "langchain-core", specifier = ">=1.0" },
+    { name = "langchain-openai", specifier = ">=1.0" },
+    { name = "langgraph", specifier = ">=1.0" },
+]
 
 [[package]]
 name = "click"
@@ -607,6 +627,26 @@ wheels = [
 name = "git-agent"
 version = "0.1.0"
 source = { editable = "agents/git_agent" }
+dependencies = [
+    { name = "deepagents" },
+    { name = "dev-team-mcp" },
+    { name = "dev-team-state" },
+    { name = "langchain" },
+    { name = "langchain-core" },
+    { name = "langchain-openai" },
+    { name = "langgraph" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "deepagents", specifier = ">=0.6.1" },
+    { name = "dev-team-mcp", editable = "shared/mcp" },
+    { name = "dev-team-state", editable = "shared/state" },
+    { name = "langchain", specifier = ">=1.0" },
+    { name = "langchain-core", specifier = ">=1.0" },
+    { name = "langchain-openai", specifier = ">=1.0" },
+    { name = "langgraph", specifier = ">=1.0" },
+]
 
 [[package]]
 name = "google-auth"
@@ -711,6 +751,26 @@ source = { editable = "agents/incident_response_agent" }
 name = "infrastructure-agent"
 version = "0.1.0"
 source = { editable = "agents/infrastructure_agent" }
+dependencies = [
+    { name = "deepagents" },
+    { name = "dev-team-mcp" },
+    { name = "dev-team-state" },
+    { name = "langchain" },
+    { name = "langchain-core" },
+    { name = "langchain-openai" },
+    { name = "langgraph" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "deepagents", specifier = ">=0.6.1" },
+    { name = "dev-team-mcp", editable = "shared/mcp" },
+    { name = "dev-team-state", editable = "shared/state" },
+    { name = "langchain", specifier = ">=1.0" },
+    { name = "langchain-core", specifier = ">=1.0" },
+    { name = "langchain-openai", specifier = ">=1.0" },
+    { name = "langgraph", specifier = ">=1.0" },
+]
 
 [[package]]
 name = "iniconfig"
@@ -2023,6 +2083,28 @@ wheels = [
 name = "security-agent"
 version = "0.1.0"
 source = { editable = "agents/security_agent" }
+dependencies = [
+    { name = "deepagents" },
+    { name = "dev-team-guardrail" },
+    { name = "dev-team-mcp" },
+    { name = "dev-team-state" },
+    { name = "langchain" },
+    { name = "langchain-core" },
+    { name = "langchain-openai" },
+    { name = "langgraph" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "deepagents", specifier = ">=0.6.1" },
+    { name = "dev-team-guardrail", editable = "shared/guardrail" },
+    { name = "dev-team-mcp", editable = "shared/mcp" },
+    { name = "dev-team-state", editable = "shared/state" },
+    { name = "langchain", specifier = ">=1.0" },
+    { name = "langchain-core", specifier = ">=1.0" },
+    { name = "langchain-openai", specifier = ">=1.0" },
+    { name = "langgraph", specifier = ">=1.0" },
+]
 
 [[package]]
 name = "sniffio"
