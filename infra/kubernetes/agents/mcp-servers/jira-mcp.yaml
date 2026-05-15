@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jira-mcp
+  namespace: dev-team-agents
+  labels:
+    app: jira-mcp
+    team: dev-team
+    component: mcp-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jira-mcp
+  template:
+    metadata:
+      labels:
+        app: jira-mcp
+        team: dev-team
+        component: mcp-server
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: "jira-mcp-role"
+        vault.hashicorp.com/agent-inject-secret-token: "secret/data/dev-team/mcp/jira"
+    spec:
+      securityContext:
+        runAsUser: 1001
+        runAsNonRoot: true
+        fsGroup: 0
+      containers:
+        - name: jira-mcp
+          image: registry.redhat.io/rh-ee-mcp/jira-mcp-server:latest
+          ports:
+            - containerPort: 3000
+              name: mcp
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+          envFrom:
+            - secretRef:
+                name: jira-mcp-credentials
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jira-mcp
+  namespace: dev-team-agents
+  labels:
+    app: jira-mcp
+spec:
+  selector:
+    app: jira-mcp
+  ports:
+    - name: mcp
+      port: 3000
+      targetPort: 3000

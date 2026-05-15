@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jenkins-mcp
+  namespace: dev-team-agents
+  labels:
+    app: jenkins-mcp
+    team: dev-team
+    component: mcp-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jenkins-mcp
+  template:
+    metadata:
+      labels:
+        app: jenkins-mcp
+        team: dev-team
+        component: mcp-server
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: "jenkins-mcp-role"
+        vault.hashicorp.com/agent-inject-secret-token: "secret/data/dev-team/mcp/jenkins"
+    spec:
+      securityContext:
+        runAsUser: 1001
+        runAsNonRoot: true
+        fsGroup: 0
+      containers:
+        - name: jenkins-mcp
+          image: registry.redhat.io/rh-ee-mcp/jenkins-mcp-server:latest
+          ports:
+            - containerPort: 3000
+              name: mcp
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+          envFrom:
+            - secretRef:
+                name: jenkins-mcp-credentials
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jenkins-mcp
+  namespace: dev-team-agents
+  labels:
+    app: jenkins-mcp
+spec:
+  selector:
+    app: jenkins-mcp
+  ports:
+    - name: mcp
+      port: 3000
+      targetPort: 3000

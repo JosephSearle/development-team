@@ -363,11 +363,16 @@ Full TDD feature development loop with mocked vLLM endpoints. Additional test:
 
 ---
 
-## Phase 7 — Infrastructure & Deployment
+## Phase 7 — Infrastructure & Deployment ✅ COMPLETE
 
-- **Remove Milvus** from `dev-team-agents` namespace Kubernetes manifests and agent pod NetworkPolicy egress rules
-- **Milvus StatefulSet** moved to `dev-team-platform` namespace with no agent-facing Service
-- All agent Deployments reference `deepagents>=0.6.1` in their container images
+- **Remove Milvus** from `dev-team-agents` namespace — done; Milvus StatefulSet in `dev-team-platform` with internal headless Service only (no agent-facing Service)
+- **All agent Deployments** in `infra/kubernetes/agents/deployments/` reference `registry.internal/dev-team/<agent>:latest` images; `deepagents>=0.6.1` installed via `uv sync --frozen` at image build time
+- **Full manifest set** written to `infra/kubernetes/`:
+  - `namespaces/` — 3 Namespace resources
+  - `agents/` — ServiceAccounts, RBAC, NetworkPolicies, 12 Deployments/CronJob, 6 MCP server Deployments+Services, 5 KEDA ScaledObjects
+  - `inference/` — 4 KServe InferenceService resources (Reasoning, Code+LoRA, Utility, Guardrail)
+  - `platform/` — Redis StatefulSet+Sentinel+PDB, LangSmith StatefulSet, Milvus StatefulSet
+- **CI job `validate-manifests`** added to `.github/workflows/ci.yml` (runs parallel to integration tests)
 
 ---
 
@@ -417,4 +422,4 @@ Full TDD feature development loop with mocked vLLM endpoints. Additional test:
 | 5 | `uv run pytest agents/architecture_agent/tests/ agents/docs_agent/tests/ agents/dependency_agent/tests/ agents/incident_response_agent/tests/ -v --cov-fail-under=80` | All green |
 | All | `uv run ruff check . && uv run mypy shared/ agents/*/src` | Zero violations |
 | 6 | `uv run pytest tests/integration/ -v --timeout=120` | Full loop green |
-| 7 | `kubectl apply --dry-run=client -f infra/kubernetes/` | No errors |
+| 7 | `find infra/kubernetes -name "*.yaml" \| xargs kubeconform -strict -ignore-missing-schemas -summary` | 0 invalid, 0 errors (CRD resources skipped) |

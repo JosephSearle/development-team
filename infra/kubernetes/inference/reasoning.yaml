@@ -1,0 +1,33 @@
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: vllm-reasoning
+  namespace: dev-team-inference
+  labels:
+    team: dev-team
+    tier: reasoning
+  annotations:
+    serving.kserve.io/deploymentMode: RawDeployment
+spec:
+  predictor:
+    model:
+      modelFormat:
+        name: vLLM
+      storageUri: "s3://dev-team-models/Qwen3.5-72B-Instruct"
+      args:
+        - --model=/mnt/models/Qwen3.5-72B-Instruct
+        - --tensor-parallel-size=2
+        - --enable-prefix-caching
+        - --max-model-len=131072
+        - --dtype=bfloat16
+      resources:
+        requests:
+          cpu: "8"
+          memory: "160Gi"
+          nvidia.com/gpu: "2"
+        limits:
+          cpu: "16"
+          memory: "160Gi"
+          nvidia.com/gpu: "2"
+      nodeSelector:
+        nvidia.com/gpu.product: A100-SXM4-80GB
