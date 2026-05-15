@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orchestrator
+  namespace: dev-team-agents
+  labels:
+    app: orchestrator
+    team: dev-team
+    domain: orchestration
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: orchestrator
+  template:
+    metadata:
+      labels:
+        app: orchestrator
+        team: dev-team
+        domain: orchestration
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: "orchestrator-role"
+        vault.hashicorp.com/agent-inject-secret-credentials: "secret/data/dev-team/orchestrator"
+    spec:
+      serviceAccountName: orchestrator-sa
+      automountServiceAccountToken: true
+      securityContext:
+        runAsUser: 1001
+        runAsNonRoot: true
+        fsGroup: 0
+      containers:
+        - name: orchestrator
+          image: registry.internal/dev-team/orchestrator:latest
+          command: ["python", "-m", "orchestrator"]
+          ports:
+            - containerPort: 8080
+              name: http
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+            limits:
+              cpu: "2"
+              memory: "2Gi"
+          env:
+            - name: LANGCHAIN_TRACING_V2
+              value: "true"
+            - name: LANGCHAIN_ENDPOINT
+              value: "http://langsmith.dev-team-platform.svc.cluster.local:1984"
+            - name: LANGCHAIN_PROJECT
+              value: "dev-team"
+            - name: REDIS_URL
+              value: "redis://redis.dev-team-platform.svc.cluster.local:6379"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10

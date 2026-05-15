@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: code-review-agent
+  namespace: dev-team-agents
+  labels:
+    app: code-review-agent
+    team: dev-team
+    domain: development
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: code-review-agent
+  template:
+    metadata:
+      labels:
+        app: code-review-agent
+        team: dev-team
+        domain: development
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: "code-review-agent-role"
+        vault.hashicorp.com/agent-inject-secret-credentials: "secret/data/dev-team/code-review-agent"
+    spec:
+      serviceAccountName: code-review-agent-sa
+      automountServiceAccountToken: false
+      securityContext:
+        runAsUser: 1001
+        runAsNonRoot: true
+        fsGroup: 0
+      containers:
+        - name: code-review-agent
+          image: registry.internal/dev-team/code-review-agent:latest
+          command: ["python", "-m", "code_review_agent"]
+          ports:
+            - containerPort: 8080
+              name: http
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+            limits:
+              cpu: "2"
+              memory: "2Gi"
+          env:
+            - name: LANGCHAIN_TRACING_V2
+              value: "true"
+            - name: LANGCHAIN_ENDPOINT
+              value: "http://langsmith.dev-team-platform.svc.cluster.local:1984"
+            - name: LANGCHAIN_PROJECT
+              value: "dev-team"
+            - name: REDIS_URL
+              value: "redis://redis.dev-team-platform.svc.cluster.local:6379"
+            - name: VLLM_UTILITY_URL
+              value: "http://vllm-utility.dev-team-inference.svc.cluster.local:8080/v1"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10

@@ -1,0 +1,93 @@
+# KEDA ScaledObjects for agents with variable load.
+# Trigger: Prometheus metric from self-hosted LangSmith (task queue depth per agent).
+# Agents with fixed replicas (code-review, cicd, architecture, docs, infrastructure,
+# incident-response, dependency) are omitted — they are not scaled by KEDA.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: orchestrator-scaler
+  namespace: dev-team-agents
+spec:
+  scaleTargetRef:
+    name: orchestrator
+  minReplicaCount: 2
+  maxReplicaCount: 6
+  triggers:
+    - type: prometheus
+      metadata:
+        serverAddress: http://langsmith.dev-team-platform.svc.cluster.local:1984
+        metricName: langsmith_pending_tasks_orchestrator
+        query: langsmith_pending_tasks{agent="orchestrator"}
+        threshold: "5"
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: code-agent-scaler
+  namespace: dev-team-agents
+spec:
+  scaleTargetRef:
+    name: code-agent
+  minReplicaCount: 2
+  maxReplicaCount: 10
+  triggers:
+    - type: prometheus
+      metadata:
+        serverAddress: http://langsmith.dev-team-platform.svc.cluster.local:1984
+        metricName: langsmith_pending_tasks_code_agent
+        query: langsmith_pending_tasks{agent="code-agent"}
+        threshold: "5"
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: test-agent-scaler
+  namespace: dev-team-agents
+spec:
+  scaleTargetRef:
+    name: test-agent
+  minReplicaCount: 2
+  maxReplicaCount: 10
+  triggers:
+    - type: prometheus
+      metadata:
+        serverAddress: http://langsmith.dev-team-platform.svc.cluster.local:1984
+        metricName: langsmith_pending_tasks_test_agent
+        query: langsmith_pending_tasks{agent="test-agent"}
+        threshold: "5"
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: git-agent-scaler
+  namespace: dev-team-agents
+spec:
+  scaleTargetRef:
+    name: git-agent
+  minReplicaCount: 2
+  maxReplicaCount: 8
+  triggers:
+    - type: prometheus
+      metadata:
+        serverAddress: http://langsmith.dev-team-platform.svc.cluster.local:1984
+        metricName: langsmith_pending_tasks_git_agent
+        query: langsmith_pending_tasks{agent="git-agent"}
+        threshold: "5"
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: security-agent-scaler
+  namespace: dev-team-agents
+spec:
+  scaleTargetRef:
+    name: security-agent
+  minReplicaCount: 2
+  maxReplicaCount: 6
+  triggers:
+    - type: prometheus
+      metadata:
+        serverAddress: http://langsmith.dev-team-platform.svc.cluster.local:1984
+        metricName: langsmith_pending_tasks_security_agent
+        query: langsmith_pending_tasks{agent="security-agent"}
+        threshold: "5"
