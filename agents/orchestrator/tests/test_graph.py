@@ -42,7 +42,7 @@ class TestGraphGuardrailFails:
 
 class TestGraphSmoke:
     async def test_smoke_two_subtasks_complete(
-        self, mock_guardrail_pass: None, mock_llm: MagicMock
+        self, mock_guardrail_pass: None, mock_llm: MagicMock, mock_all_agent_graphs: None
     ) -> None:
         graph = build_orchestrator_graph(checkpointer=InMemorySaver())
         config = {"configurable": {"thread_id": "smoke-1"}}
@@ -52,7 +52,7 @@ class TestGraphSmoke:
         assert result["guardrail_passed"] is True
 
     async def test_smoke_all_subtask_statuses_completed(
-        self, mock_guardrail_pass: None, mock_llm: MagicMock
+        self, mock_guardrail_pass: None, mock_llm: MagicMock, mock_all_agent_graphs: None
     ) -> None:
         graph = build_orchestrator_graph(checkpointer=InMemorySaver())
         config = {"configurable": {"thread_id": "smoke-2"}}
@@ -71,7 +71,10 @@ class TestGraphHITL:
         assert "__interrupt__" in result
 
     async def test_resume_completes_graph(
-        self, mock_guardrail_pass: None, mock_llm_with_approval_subtask: MagicMock
+        self,
+        mock_guardrail_pass: None,
+        mock_llm_with_approval_subtask: MagicMock,
+        mock_all_agent_graphs: None,
     ) -> None:
         graph = build_orchestrator_graph(checkpointer=InMemorySaver())
         config = {"configurable": {"thread_id": "hitl-graph-2"}}
@@ -86,7 +89,7 @@ class TestGraphHITL:
 
 class TestGraphStreaming:
     async def test_astream_updates_yields_node_chunks(
-        self, mock_guardrail_pass: None, mock_llm: MagicMock
+        self, mock_guardrail_pass: None, mock_llm: MagicMock, mock_all_agent_graphs: None
     ) -> None:
         graph = build_orchestrator_graph(checkpointer=InMemorySaver())
         config = {"configurable": {"thread_id": "stream-1"}}
@@ -99,7 +102,7 @@ class TestGraphStreaming:
         assert "input_guardrail" in node_names
 
     async def test_astream_events_v3_yields_events(
-        self, mock_guardrail_pass: None, mock_llm: MagicMock
+        self, mock_guardrail_pass: None, mock_llm: MagicMock, mock_all_agent_graphs: None
     ) -> None:
         graph = build_orchestrator_graph(checkpointer=InMemorySaver())
         config = {"configurable": {"thread_id": "stream-2"}}

@@ -8,7 +8,15 @@
       "Bash(grep -v \"^$\")",
       "Bash(tree -L 3 -d /Users/josephsearle/Documents/Projects/development-team --ignore \".git|.pytest_cache|.mypy_cache|.ruff_cache|.venv\")",
       "Bash(grep -E \"^/Users.*/\\(shared|agents\\)$|^/Users.*/\\(shared|agents\\)/[^/]+$\")",
-      "Bash(grep -A2 \"^name = \\\\\"langchain\\\\\"$\" /Users/josephsearle/Documents/Projects/development-team/uv.lock)"
+      "Bash(grep -A2 \"^name = \\\\\"langchain\\\\\"$\" /Users/josephsearle/Documents/Projects/development-team/uv.lock)",
+      "Bash(grep -v \"^--$\")",
+      "Bash(grep -n \"^\\\\[\\\\[package\\\\]\\\\]$\" /Users/josephsearle/Documents/Projects/development-team/uv.lock)",
+      "Bash(awk '/^\\\\[\\\\[package\\\\]\\\\]$/,/^$/{print NR\": \"$0}' /Users/josephsearle/Documents/Projects/development-team/uv.lock)",
+      "Bash(grep -n \"^\\\\[\\\\[package\\\\]\\\\]$\\\\|^name = \\\\\"deepagents\\\\\"\" /Users/josephsearle/Documents/Projects/development-team/uv.lock)",
+      "Bash(python3 -c \"import sys; sys.path.insert\\(0, '/Users/josephsearle/Documents/Projects/development-team/.venv/lib/python3.12/site-packages'\\); import deepagents; print\\(dir\\(deepagents\\)\\)\")"
+    ],
+    "additionalDirectories": [
+      "/Users/josephsearle/Documents/Projects/development-team"
     ]
   }
 }

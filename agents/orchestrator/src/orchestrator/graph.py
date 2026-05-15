@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from typing import Any
 
 from dev_team_state import OrchestratorState
-from dev_team_state.schema import AgentResult
 from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, START, StateGraph
@@ -14,7 +13,34 @@ from orchestrator.nodes.agent_router import _AGENT_NODE_MAP, agent_router, route
 from orchestrator.nodes.context_summariser import context_summariser
 from orchestrator.nodes.hitl_gate import hitl_gate
 from orchestrator.nodes.input_guardrail import input_guardrail
+from orchestrator.nodes.invoke_agents import (
+    invoke_architecture_agent,
+    invoke_cicd_agent,
+    invoke_code_agent,
+    invoke_code_review_agent,
+    invoke_dependency_agent,
+    invoke_docs_agent,
+    invoke_git_agent,
+    invoke_incident_response_agent,
+    invoke_infrastructure_agent,
+    invoke_security_agent,
+    invoke_test_agent,
+)
 from orchestrator.nodes.task_planner import task_planner
+
+_INVOKE_FN_MAP: dict[str, Callable[[OrchestratorState], Awaitable[dict[str, Any]]]] = {
+    "code_agent": invoke_code_agent,
+    "test_agent": invoke_test_agent,
+    "code_review_agent": invoke_code_review_agent,
+    "git_agent": invoke_git_agent,
+    "architecture_agent": invoke_architecture_agent,
+    "cicd_agent": invoke_cicd_agent,
+    "security_agent": invoke_security_agent,
+    "docs_agent": invoke_docs_agent,
+    "infrastructure_agent": invoke_infrastructure_agent,
+    "dependency_agent": invoke_dependency_agent,
+    "incident_response_agent": invoke_incident_response_agent,
+}
 
 
 def _route_after_guardrail(state: OrchestratorState) -> str:
@@ -23,28 +49,6 @@ def _route_after_guardrail(state: OrchestratorState) -> str:
 
 def _route_after_router(state: OrchestratorState) -> str:
     return "hitl_gate" if state["current_subtask"] is not None else END
-
-
-# Stub specialist nodes — replaced by real agent invocations in Phases 3–5.
-def _make_stub_agent_node(agent_id: str) -> Callable[[OrchestratorState], dict[str, Any]]:
-    def _node(state: OrchestratorState) -> dict[str, Any]:
-        subtask = state["current_subtask"]
-        assert subtask is not None
-        result = AgentResult(
-            agent_id=agent_id,
-            subtask_id=subtask["subtask_id"],
-            status="completed",
-            output=f"stub:{agent_id}",
-            metadata={},
-        )
-        updated_plan = [
-            {**s, "status": "completed"} if s["subtask_id"] == subtask["subtask_id"] else s
-            for s in state["plan"]
-        ]
-        return {"agent_results": [result], "plan": updated_plan}
-
-    _node.__name__ = f"invoke_{agent_id}"
-    return _node
 
 
 def build_orchestrator_graph(
@@ -59,7 +63,7 @@ def build_orchestrator_graph(
     builder.add_node("context_summariser", context_summariser)
 
     for agent_id, node_name in _AGENT_NODE_MAP.items():
-        builder.add_node(node_name, _make_stub_agent_node(agent_id))  # type: ignore[arg-type]
+        builder.add_node(node_name, _INVOKE_FN_MAP[agent_id])  # type: ignore[arg-type]
 
     builder.add_edge(START, "input_guardrail")
 

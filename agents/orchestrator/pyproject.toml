@@ -10,6 +10,17 @@ dependencies = [
   "dev-team-state",
   "dev-team-guardrail",
   "dev-team-mcp",
+  "test-agent",
+  "code-agent",
+  "code-review-agent",
+  "git-agent",
+  "security-agent",
+  "cicd-agent",
+  "infrastructure-agent",
+  "architecture-agent",
+  "docs-agent",
+  "dependency-agent",
+  "incident-response-agent",
 ]
 
 [build-system]
@@ -23,3 +34,14 @@ packages = ["src/orchestrator"]
 dev-team-state = { workspace = true }
 dev-team-guardrail = { workspace = true }
 dev-team-mcp = { workspace = true }
+test-agent = { workspace = true }
+code-agent = { workspace = true }
+code-review-agent = { workspace = true }
+git-agent = { workspace = true }
+security-agent = { workspace = true }
+cicd-agent = { workspace = true }
+infrastructure-agent = { workspace = true }
+architecture-agent = { workspace = true }
+docs-agent = { workspace = true }
+dependency-agent = { workspace = true }
+incident-response-agent = { workspace = true }

@@ -34,6 +34,7 @@ dev = [
     { name = "pytest-cov", specifier = ">=6" },
     { name = "pytest-httpx", specifier = ">=0.35" },
     { name = "pytest-mock", specifier = ">=3.14" },
+    { name = "pytest-timeout", specifier = ">=0.5" },
     { name = "ruff", specifier = ">=0.9" },
     { name = "testcontainers", extras = ["redis"], specifier = ">=4.8" },
 ]
@@ -1443,24 +1444,46 @@ name = "orchestrator"
 version = "0.1.0"
 source = { editable = "agents/orchestrator" }
 dependencies = [
+    { name = "architecture-agent" },
+    { name = "cicd-agent" },
+    { name = "code-agent" },
+    { name = "code-review-agent" },
+    { name = "dependency-agent" },
     { name = "dev-team-guardrail" },
     { name = "dev-team-mcp" },
     { name = "dev-team-state" },
+    { name = "docs-agent" },
+    { name = "git-agent" },
+    { name = "incident-response-agent" },
+    { name = "infrastructure-agent" },
     { name = "langchain" },
     { name = "langchain-core" },
     { name = "langchain-openai" },
     { name = "langgraph" },
+    { name = "security-agent" },
+    { name = "test-agent" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "architecture-agent", editable = "agents/architecture_agent" },
+    { name = "cicd-agent", editable = "agents/cicd_agent" },
+    { name = "code-agent", editable = "agents/code_agent" },
+    { name = "code-review-agent", editable = "agents/code_review_agent" },
+    { name = "dependency-agent", editable = "agents/dependency_agent" },
     { name = "dev-team-guardrail", editable = "shared/guardrail" },
     { name = "dev-team-mcp", editable = "shared/mcp" },
     { name = "dev-team-state", editable = "shared/state" },
+    { name = "docs-agent", editable = "agents/docs_agent" },
+    { name = "git-agent", editable = "agents/git_agent" },
+    { name = "incident-response-agent", editable = "agents/incident_response_agent" },
+    { name = "infrastructure-agent", editable = "agents/infrastructure_agent" },
     { name = "langchain", specifier = ">=0.3" },
     { name = "langchain-core", specifier = ">=0.3" },
     { name = "langchain-openai", specifier = ">=0.3" },
     { name = "langgraph", specifier = ">=0.3" },
+    { name = "security-agent", editable = "agents/security_agent" },
+    { name = "test-agent", editable = "agents/test_agent" },
 ]
 
 [[package]]
@@ -1805,6 +1828,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/68/14/eb014d26be205d38ad5ad20d9a80f7d201472e08167f0bb4361e251084a9/pytest_mock-3.15.1.tar.gz", hash = "sha256:1849a238f6f396da19762269de72cb1814ab44416fa73a8686deac10b0d87a0f", size = 34036, upload-time = "2025-09-16T16:37:27.081Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/5a/cc/06253936f4a7fa2e0f48dfe6d851d9c56df896a9ab09ac019d70b760619c/pytest_mock-3.15.1-py3-none-any.whl", hash = "sha256:0a25e2eb88fe5168d535041d09a4529a188176ae608a6d249ee65abc0949630d", size = 10095, upload-time = "2025-09-16T16:37:25.734Z" },
+]
+
+[[package]]
+name = "pytest-timeout"
+version = "2.4.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pytest" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ac/82/4c9ecabab13363e72d880f2fb504c5f750433b2b6f16e99f4ec21ada284c/pytest_timeout-2.4.0.tar.gz", hash = "sha256:7e68e90b01f9eff71332b25001f85c75495fc4e3a836701876183c4bcfd0540a", size = 17973, upload-time = "2025-05-05T19:44:34.99Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/fa/b6/3127540ecdf1464a00e5a01ee60a1b09175f6913f0644ac748494d9c4b21/pytest_timeout-2.4.0-py3-none-any.whl", hash = "sha256:c42667e5cdadb151aeb5b26d114aff6bdf5a907f176a007a30b940d3d865b5c2", size = 14382, upload-time = "2025-05-05T19:44:33.502Z" },
 ]
 
 [[package]]
