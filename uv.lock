@@ -28,15 +28,15 @@ members = [
 
 [manifest.dependency-groups]
 dev = [
-    { name = "mypy", specifier = ">=1.13" },
-    { name = "pytest", specifier = ">=8" },
-    { name = "pytest-asyncio", specifier = ">=0.24" },
-    { name = "pytest-cov", specifier = ">=6" },
-    { name = "pytest-httpx", specifier = ">=0.35" },
-    { name = "pytest-mock", specifier = ">=3.14" },
-    { name = "pytest-timeout", specifier = ">=0.5" },
+    { name = "mypy", specifier = ">=2" },
+    { name = "pytest", specifier = ">=9" },
+    { name = "pytest-asyncio", specifier = ">=1.0" },
+    { name = "pytest-cov", specifier = ">=7" },
+    { name = "pytest-httpx", specifier = ">=0.36" },
+    { name = "pytest-mock", specifier = ">=3.15" },
+    { name = "pytest-timeout", specifier = ">=2" },
     { name = "ruff", specifier = ">=0.9" },
-    { name = "testcontainers", extras = ["redis"], specifier = ">=4.8" },
+    { name = "testcontainers", extras = ["redis"], specifier = ">=4.14" },
 ]
 
 [[package]]
@@ -358,10 +358,10 @@ requires-dist = [
     { name = "dev-team-guardrail", editable = "shared/guardrail" },
     { name = "dev-team-mcp", editable = "shared/mcp" },
     { name = "dev-team-state", editable = "shared/state" },
-    { name = "langchain", specifier = ">=0.3" },
-    { name = "langchain-core", specifier = ">=0.3" },
-    { name = "langchain-openai", specifier = ">=0.3" },
-    { name = "langgraph", specifier = ">=0.3" },
+    { name = "langchain", specifier = ">=1.0" },
+    { name = "langchain-core", specifier = ">=1.0" },
+    { name = "langchain-openai", specifier = ">=1.0" },
+    { name = "langgraph", specifier = ">=1.0" },
 ]
 
 [[package]]
@@ -383,10 +383,10 @@ requires-dist = [
     { name = "deepagents", specifier = ">=0.6.1" },
     { name = "dev-team-mcp", editable = "shared/mcp" },
     { name = "dev-team-state", editable = "shared/state" },
-    { name = "langchain", specifier = ">=0.3" },
-    { name = "langchain-core", specifier = ">=0.3" },
-    { name = "langchain-openai", specifier = ">=0.3" },
-    { name = "langgraph", specifier = ">=0.3" },
+    { name = "langchain", specifier = ">=1.0" },
+    { name = "langchain-core", specifier = ">=1.0" },
+    { name = "langchain-openai", specifier = ">=1.0" },
+    { name = "langgraph", specifier = ">=1.0" },
 ]
 
 [[package]]
@@ -586,7 +586,7 @@ dependencies = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "httpx", specifier = ">=0.27" }]
+requires-dist = [{ name = "httpx", specifier = ">=0.28" }]
 
 [[package]]
 name = "dev-team-mcp"
@@ -597,7 +597,7 @@ dependencies = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "langchain-mcp-adapters", specifier = ">=0.1" }]
+requires-dist = [{ name = "langchain-mcp-adapters", specifier = ">=0.2" }]
 
 [[package]]
 name = "dev-team-state"
@@ -612,9 +612,9 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "langchain-core", specifier = ">=0.3" },
+    { name = "langchain-core", specifier = ">=1.0" },
     { name = "langgraph", specifier = ">=1.0" },
-    { name = "langgraph-checkpoint-redis", specifier = ">=0.3" },
+    { name = "langgraph-checkpoint-redis", specifier = ">=0.4" },
     { name = "typing-extensions", specifier = ">=4.12" },
 ]
 
@@ -1478,10 +1478,10 @@ requires-dist = [
     { name = "git-agent", editable = "agents/git_agent" },
     { name = "incident-response-agent", editable = "agents/incident_response_agent" },
     { name = "infrastructure-agent", editable = "agents/infrastructure_agent" },
-    { name = "langchain", specifier = ">=0.3" },
-    { name = "langchain-core", specifier = ">=0.3" },
-    { name = "langchain-openai", specifier = ">=0.3" },
-    { name = "langgraph", specifier = ">=0.3" },
+    { name = "langchain", specifier = ">=1.0" },
+    { name = "langchain-core", specifier = ">=1.0" },
+    { name = "langchain-openai", specifier = ">=1.0" },
+    { name = "langgraph", specifier = ">=1.0" },
     { name = "security-agent", editable = "agents/security_agent" },
     { name = "test-agent", editable = "agents/test_agent" },
 ]
@@ -2284,10 +2284,10 @@ requires-dist = [
     { name = "deepagents", specifier = ">=0.6.1" },
     { name = "dev-team-guardrail", editable = "shared/guardrail" },
     { name = "dev-team-state", editable = "shared/state" },
-    { name = "langchain", specifier = ">=0.3" },
-    { name = "langchain-core", specifier = ">=0.3" },
-    { name = "langchain-openai", specifier = ">=0.3" },
-    { name = "langgraph", specifier = ">=0.3" },
+    { name = "langchain", specifier = ">=1.0" },
+    { name = "langchain-core", specifier = ">=1.0" },
+    { name = "langchain-openai", specifier = ">=1.0" },
+    { name = "langgraph", specifier = ">=1.0" },
 ]
 
 [[package]]
