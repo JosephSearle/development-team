@@ -24,6 +24,7 @@ dev = [
   "pytest-mock>=3.14",
   "pytest-httpx>=0.35",
   "pytest-cov>=6",
+  "pytest-timeout>=0.5",
   "testcontainers[redis]>=4.8",
   "ruff>=0.9",
   "mypy>=1.13",
@@ -61,4 +62,9 @@ testpaths = [
   "agents/security_agent/tests",
   "agents/cicd_agent/tests",
   "agents/infrastructure_agent/tests",
+  "agents/architecture_agent/tests",
+  "agents/docs_agent/tests",
+  "agents/dependency_agent/tests",
+  "agents/incident_response_agent/tests",
+  "tests/integration",
 ]

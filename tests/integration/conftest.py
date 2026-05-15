@@ -1,4 +1,4 @@
-"""Shared fixtures for orchestrator tests."""
+"""Integration test fixtures for the full orchestrator + agent loop."""
 
 from __future__ import annotations
 
@@ -8,67 +8,34 @@ from unittest.mock import AsyncMock, MagicMock
 import orchestrator.nodes.invoke_agents as invoke_mod
 import pytest
 from dev_team_guardrail import GuardrailResult
-from dev_team_state import OrchestratorState, Subtask, TaskStatus
-from dev_team_state.schema import AgentResult, HITLApproval
+from dev_team_state import OrchestratorState, TaskStatus
 from langchain_core.messages import AIMessage
 
-
-@pytest.fixture()
-def minimal_subtask() -> Subtask:
-    return Subtask(
-        subtask_id="sub-001",
-        description="Write failing tests for rate limiter",
-        agent_type="code_agent",
-        requires_approval=False,
-        status=TaskStatus.PLANNING.value,
-    )
+# ---------------------------------------------------------------------------
+# State factory
+# ---------------------------------------------------------------------------
 
 
-@pytest.fixture()
-def approval_subtask() -> Subtask:
-    return Subtask(
-        subtask_id="sub-001",
-        description="Deploy to production",
-        agent_type="git_agent",
-        requires_approval=True,
-        status=TaskStatus.PLANNING.value,
-    )
-
-
-@pytest.fixture()
-def minimal_state(minimal_subtask: Subtask) -> OrchestratorState:
+def initial_state() -> OrchestratorState:
     return OrchestratorState(
-        task_id="task-001",
-        task_description="Implement rate limiter middleware",
-        plan=[minimal_subtask],
-        current_subtask=minimal_subtask,
-        agent_results=[],
-        human_approvals=[],
-        run_id="run-001",
-        branch_name="feat/rate-limiter",
-        pr_url=None,
-        status=TaskStatus.IN_PROGRESS,
-        messages=[],
-        guardrail_passed=False,
-    )
-
-
-@pytest.fixture()
-def pre_planning_state() -> OrchestratorState:
-    return OrchestratorState(
-        task_id="task-002",
-        task_description="Add authentication to API endpoints",
+        task_id="integ-001",
+        task_description="Implement hello_world() function that returns 'Hello, World!'",
         plan=[],
         current_subtask=None,
         agent_results=[],
         human_approvals=[],
-        run_id="run-002",
-        branch_name="feat/auth",
+        run_id="run-integ-001",
+        branch_name="feat/hello-world",
         pr_url=None,
         status=TaskStatus.PLANNING,
         messages=[],
         guardrail_passed=True,
     )
+
+
+# ---------------------------------------------------------------------------
+# Guardrail mocks
+# ---------------------------------------------------------------------------
 
 
 @pytest.fixture()
@@ -93,6 +60,11 @@ def mock_guardrail_fail(monkeypatch: pytest.MonkeyPatch) -> None:
     )
 
 
+# ---------------------------------------------------------------------------
+# LLM mocks (task planner + context summariser)
+# ---------------------------------------------------------------------------
+
+
 def _make_mock_llm(subtasks: list[dict[str, Any]]) -> MagicMock:
     mock_structured = MagicMock()
     mock_structured.ainvoke = AsyncMock(return_value=subtasks)
@@ -102,19 +74,34 @@ def _make_mock_llm(subtasks: list[dict[str, Any]]) -> MagicMock:
 
 
 @pytest.fixture()
-def mock_llm(monkeypatch: pytest.MonkeyPatch) -> MagicMock:
+def mock_tdd_plan_llm(monkeypatch: pytest.MonkeyPatch) -> MagicMock:
+    """Task planner returns a 4-subtask TDD plan: test→code→review→git."""
     subtasks = [
         {
             "subtask_id": "sub-001",
-            "description": "Write failing tests",
+            "description": "Write failing tests for hello_world()",
             "agent_type": "test_agent",
             "requires_approval": False,
             "status": "planning",
         },
         {
             "subtask_id": "sub-002",
-            "description": "Implement feature",
+            "description": "Implement hello_world() to pass the tests",
             "agent_type": "code_agent",
+            "requires_approval": False,
+            "status": "planning",
+        },
+        {
+            "subtask_id": "sub-003",
+            "description": "Review code for hello_world()",
+            "agent_type": "code_review_agent",
+            "requires_approval": False,
+            "status": "planning",
+        },
+        {
+            "subtask_id": "sub-004",
+            "description": "Create PR for hello_world() feature",
+            "agent_type": "git_agent",
             "requires_approval": False,
             "status": "planning",
         },
@@ -128,13 +115,41 @@ def mock_llm(monkeypatch: pytest.MonkeyPatch) -> MagicMock:
 
 
 @pytest.fixture()
-def mock_llm_with_approval_subtask(monkeypatch: pytest.MonkeyPatch) -> MagicMock:
+def mock_approval_plan_llm(monkeypatch: pytest.MonkeyPatch) -> MagicMock:
+    """Task planner returns a single git_agent subtask that requires approval."""
     subtasks = [
         {
             "subtask_id": "sub-001",
-            "description": "Merge to main and deploy",
+            "description": "Create PR and merge to main",
             "agent_type": "git_agent",
             "requires_approval": True,
+            "status": "planning",
+        },
+    ]
+    llm = _make_mock_llm(subtasks)
+    monkeypatch.setattr(
+        "orchestrator.nodes.task_planner.init_chat_model",
+        lambda *args, **kwargs: llm,
+    )
+    return llm
+
+
+@pytest.fixture()
+def mock_security_then_review_plan_llm(monkeypatch: pytest.MonkeyPatch) -> MagicMock:
+    """Task planner returns security_agent → code_review_agent plan."""
+    subtasks = [
+        {
+            "subtask_id": "sub-001",
+            "description": "Scan diff for security vulnerabilities",
+            "agent_type": "security_agent",
+            "requires_approval": False,
+            "status": "planning",
+        },
+        {
+            "subtask_id": "sub-002",
+            "description": "Review code changes",
+            "agent_type": "code_review_agent",
+            "requires_approval": False,
             "status": "planning",
         },
     ]
@@ -157,6 +172,11 @@ def mock_context_llm(monkeypatch: pytest.MonkeyPatch) -> MagicMock:
     return mock_llm
 
 
+# ---------------------------------------------------------------------------
+# Agent graph mocks
+# ---------------------------------------------------------------------------
+
+
 def _graph_mock(terminal_state: dict[str, Any]) -> MagicMock:
     graph = MagicMock()
     graph.ainvoke = AsyncMock(return_value=terminal_state)
@@ -173,7 +193,7 @@ def mock_all_agent_graphs(monkeypatch: pytest.MonkeyPatch) -> None:
         _graph_mock({
             "status": "completed",
             "test_file_path": "/workspace/tests/test_feature.py",
-            "test_code": "def test_hello():\n    assert True\n",
+            "test_code": "def test_hello_world():\n    assert hello_world() == 'Hello, World!'\n",
             "tdd_phase": "green",
             "error": None,
         }),
@@ -183,8 +203,8 @@ def mock_all_agent_graphs(monkeypatch: pytest.MonkeyPatch) -> None:
         "build_code_agent_graph",
         _graph_mock({
             "status": "completed",
-            "written_code": "def hello(): return True",
-            "implementation_file_path": "/workspace/src/hello.py",
+            "written_code": "def hello_world() -> str:\n    return 'Hello, World!'\n",
+            "implementation_file_path": "/workspace/src/hello_world.py",
             "error": None,
         }),
     )
@@ -209,7 +229,7 @@ def mock_all_agent_graphs(monkeypatch: pytest.MonkeyPatch) -> None:
         _graph_mock({
             "status": "completed",
             "pr_url": "https://github.com/org/repo/pull/1",
-            "commit_messages": ["feat: add feature"],
+            "commit_messages": ["feat(hello): add hello_world()"],
             "error": None,
         }),
     )
@@ -263,23 +283,4 @@ def mock_all_agent_graphs(monkeypatch: pytest.MonkeyPatch) -> None:
             "root_cause": "",
             "error": None,
         }),
-    )
-
-
-def _make_agent_result(agent_id: str, subtask_id: str) -> AgentResult:
-    return AgentResult(
-        agent_id=agent_id,
-        subtask_id=subtask_id,
-        status="completed",
-        output=f"Output from {agent_id}",
-        metadata={},
-    )
-
-
-def _make_hitl_approval(checkpoint_id: str, approved: bool) -> HITLApproval:
-    return HITLApproval(
-        checkpoint_id=checkpoint_id,
-        approved=approved,
-        approved_by="test@example.com",
-        timestamp="2026-05-13T10:00:00Z",
     )

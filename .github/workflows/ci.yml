@@ -45,6 +45,22 @@ jobs:
         run: uv run mypy agents/code_agent/src
       - name: Run mypy (code_review_agent)
         run: uv run mypy agents/code_review_agent/src
+      - name: Run mypy (git_agent)
+        run: uv run mypy agents/git_agent/src
+      - name: Run mypy (security_agent)
+        run: uv run mypy agents/security_agent/src
+      - name: Run mypy (cicd_agent)
+        run: uv run mypy agents/cicd_agent/src
+      - name: Run mypy (infrastructure_agent)
+        run: uv run mypy agents/infrastructure_agent/src
+      - name: Run mypy (architecture_agent)
+        run: uv run mypy agents/architecture_agent/src
+      - name: Run mypy (docs_agent)
+        run: uv run mypy agents/docs_agent/src
+      - name: Run mypy (dependency_agent)
+        run: uv run mypy agents/dependency_agent/src
+      - name: Run mypy (incident_response_agent)
+        run: uv run mypy agents/incident_response_agent/src
 
   unit-test:
     name: Unit Tests
@@ -59,14 +75,47 @@ jobs:
         run: uv python install 3.12
       - name: Install dependencies
         run: uv sync --locked --all-extras --dev
-      - name: Run pytest
-        run: uv run pytest shared/ agents/orchestrator/tests/ agents/test_agent/tests/ agents/code_agent/tests/ agents/code_review_agent/tests/ -v --tb=short --cov=orchestrator --cov=test_agent --cov=code_agent --cov=code_review_agent --cov-fail-under=80
+      - name: Run pytest (unit)
+        run: >
+          uv run pytest
+          shared/
+          agents/orchestrator/tests/
+          agents/test_agent/tests/
+          agents/code_agent/tests/
+          agents/code_review_agent/tests/
+          agents/git_agent/tests/
+          agents/security_agent/tests/
+          agents/cicd_agent/tests/
+          agents/infrastructure_agent/tests/
+          agents/architecture_agent/tests/
+          agents/docs_agent/tests/
+          agents/dependency_agent/tests/
+          agents/incident_response_agent/tests/
+          --ignore=tests/integration/
+          -v --tb=short
+          --cov=orchestrator --cov=test_agent --cov=code_agent --cov=code_review_agent
+          --cov=git_agent --cov=security_agent --cov=cicd_agent --cov=infrastructure_agent
+          --cov=architecture_agent --cov=docs_agent --cov=dependency_agent
+          --cov=incident_response_agent
+          --cov-fail-under=80
 
   integration:
-    name: Integration Tests (placeholder)
+    name: Integration Tests
     runs-on: ubuntu-latest
     needs: unit-test
     steps:
       - uses: actions/checkout@v4
-      - name: Placeholder
-        run: echo "Integration tests will be added in Phase 6"
+      - uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+      - name: Set up Python
+        run: uv python install 3.12
+      - name: Install dependencies
+        run: uv sync --locked --all-extras --dev
+      - name: Run integration tests
+        run: >
+          uv run pytest
+          tests/integration/
+          -v --tb=short --timeout=120
+          --cov=orchestrator
+          --cov-fail-under=70
