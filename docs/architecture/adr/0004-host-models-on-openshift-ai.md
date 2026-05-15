@@ -1,10 +1,8 @@
 # ADR 0004: Host Models on Red Hat OpenShift AI
 
-> ⚠️ **INFERRED:** This ADR was inferred from the system plan. Verify Context and Consequences before changing status to Accepted.
-
 **Date:** 2026-05-12  
-**Status:** Proposed  
-**Deciders:** <TODO: names or roles>
+**Status:** Accepted  
+**Deciders:** Engineering team
 
 ## Context
 

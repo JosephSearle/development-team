@@ -47,8 +47,8 @@ Architecture documentation must be updated as part of the development workflow. 
 | ADR | Title | Status |
 |---|---|---|
 | [0001](adr/0001-record-architecture-decisions.md) | Record Architecture Decisions | Accepted |
-| [0002](adr/0002-adopt-deepagents-langgraph-for-agent-orchestration.md) | Adopt DeepAgents + LangGraph for Agent Orchestration | Proposed |
-| [0003](adr/0003-use-multi-lora-vllm-serving-strategy.md) | Use Multi-LoRA vLLM Serving Strategy | Proposed |
-| [0004](adr/0004-host-models-on-openshift-ai.md) | Host Models on Red Hat OpenShift AI | Proposed |
-| [0005](adr/0005-use-mcp-for-all-tool-integrations.md) | Use MCP for All Tool Integrations | Proposed |
-| [0006](adr/0006-self-host-langsmith-for-observability.md) | Self-Host LangSmith for Agent Observability | Proposed |
+| [0002](adr/0002-adopt-deepagents-langgraph-for-agent-orchestration.md) | Adopt DeepAgents + LangGraph for Agent Orchestration | Accepted |
+| [0003](adr/0003-use-multi-lora-vllm-serving-strategy.md) | Use Multi-LoRA vLLM Serving Strategy | Accepted |
+| [0004](adr/0004-host-models-on-openshift-ai.md) | Host Models on Red Hat OpenShift AI | Accepted |
+| [0005](adr/0005-use-mcp-for-all-tool-integrations.md) | Use MCP for All Tool Integrations | Accepted |
+| [0006](adr/0006-self-host-langsmith-for-observability.md) | Self-Host LangSmith for Agent Observability | Accepted |

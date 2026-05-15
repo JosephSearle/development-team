@@ -120,7 +120,7 @@ All agents share a common system prompt prefix structure. vLLM's **automatic pre
 
 ### Context7 Response Caching
 
-The Context7 MCP tool is called frequently by code-writing agents. The Skills Loader maintains a short-lived in-memory cache (15-minute TTL) of recent Context7 responses, keyed by library ID and version. This avoids redundant API calls within a single task execution.
+The Context7 MCP tool is called frequently by code-writing agents. `SummarizationMiddleware` in each agent maintains prior Context7 responses within the agent's summarised context, and the DeepAgents harness avoids redundant MCP calls within a single session. There is no shared cross-agent cache; each agent manages its own context window independently.
 
 ---
 

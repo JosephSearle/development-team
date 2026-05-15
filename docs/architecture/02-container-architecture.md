@@ -7,7 +7,7 @@
 
 ## Overview
 
-The system is composed of four logical layers: an **Agent Layer** (twelve independently deployable Python agents), an **Inference Layer** (four vLLM model-serving endpoints), an **Observability & Skills Layer** (LangSmith and the skills repository), and a **Data Layer** (vector store, object storage). Agents communicate with each other exclusively through the LangGraph state graph, managed by the Orchestrator. Agents communicate with models via the OpenAI-compatible REST API exposed by vLLM. Agents communicate with external tools via the MCP protocol.
+The system is composed of four logical layers: an **Agent Layer** (twelve independently deployable Python agents), an **Inference Layer** (four vLLM model-serving endpoints), an **Observability Layer** (LangSmith), and a **Platform Layer** (Redis, object storage, and Milvus). Agents communicate with each other exclusively through the LangGraph state graph, managed by the Orchestrator. Agents communicate with models via the OpenAI-compatible REST API exposed by vLLM. Agents communicate with external tools via the MCP protocol. Agent skills are bundled as SKILL.md files within each agent's Python package — no separate skills service is required.
 
 The Container diagram below groups agents into capability domains to keep the diagram readable. Individual agent responsibilities are detailed in the service inventory table below.
 
@@ -25,7 +25,6 @@ C4Container
 
     System_Boundary(orchestration, "Orchestration Layer") {
       Container(orchestrator, "Orchestrator Agent", "Python / DeepAgents", "Master supervisor — decomposes tasks, routes to specialist agents, manages human-in-the-loop")
-      Container(skills_loader, "Skills Loader", "Python", "Fetches skills from Git repo by tag at agent boot; injects prompts and tools")
     }
 
     System_Boundary(dev_domain, "Development Domain") {
@@ -57,11 +56,9 @@ C4Container
 
     System_Boundary(platform, "Platform Layer") {
       Container(langsmith, "LangSmith", "Self-hosted / Docker", "Full agent observability — traces every LLM call, tool invocation, and sub-agent delegation")
-      ContainerDb(vector_db, "Vector Store", "Milvus", "Codebase semantic index for code-similarity lookup before writing new implementations")
+      ContainerDb(vector_db, "Vector Store", "Milvus", "Platform-tier vector database in dev-team-platform namespace; reserved for future use. Not used in the agent runtime path — agents use built-in grep/glob for live codebase search")
       ContainerDb(obj_store, "Object Storage", "ODF / Ceph S3", "Model weights, LoRA adapters, and LangSmith trace archives")
     }
-
-    Container(skills_repo, "Skills Repository", "Git (internal)", "Versioned skill bundles tagged per agent role; loaded at agent boot without redeployment")
   }
 
   System_Ext(github, "GitHub / GitLab", "")
@@ -99,8 +96,6 @@ C4Container
   Rel(dep_agent, vllm_util, "LLM inference", "REST / OpenAI-compatible")
   Rel(security_agent, vllm_guard, "Safety classification", "REST / OpenAI-compatible")
 
-  Rel(skills_loader, skills_repo, "Fetches skills by Git tag", "Git / HTTPS")
-
   Rel(git_agent, github, "Branch, commit, PR, release", "GitHub MCP")
   Rel(review_agent, github, "Comment, approve, request changes", "GitHub MCP")
   Rel(cicd_agent, jenkins, "Trigger and monitor pipelines", "Jenkins MCP")
@@ -109,7 +104,6 @@ C4Container
   Rel(orchestrator, slack, "Status updates and alerts", "Slack MCP")
   Rel(code_agent, context7, "Fetch library documentation", "Context7 MCP")
   Rel(infra_agent, argocd, "Commits manifests; ArgoCD reconciles", "Git")
-  Rel(code_agent, vector_db, "Semantic codebase search", "gRPC / Milvus SDK")
 
   UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")
 ```
@@ -121,7 +115,7 @@ C4Container
 | Agent | Model Tier | Responsibility | Communication In | Communication Out |
 |---|---|---|---|---|
 | Orchestrator | Reasoning | Master supervisor; task decomposition; human-in-the-loop | Engineer, Jira webhooks, Slack | All other agents via `task` tool |
-| Code Agent | Code (+ LoRA) | Writes production code; TDD implementation | Orchestrator | Test Agent (TDD loop), Git Agent, Context7, vector store |
+| Code Agent | Code (+ LoRA) | Writes production code; TDD implementation | Orchestrator | Test Agent (TDD loop), Git Agent, Context7; uses built-in grep/glob for codebase search |
 | Test Agent | Code (+ LoRA) | Writes tests; runs suite; enforces coverage thresholds | Orchestrator, Code Agent | Code Agent (test results), CI/CD Agent |
 | Code Review Agent | Reasoning | Reviews PRs; checks quality and coverage | Orchestrator | GitHub (comments/approval), SonarQube |
 | Git Agent | Utility | All VCS operations — branches, commits, PRs, tags | Orchestrator | GitHub / GitLab MCP |
@@ -143,6 +137,10 @@ The system uses two internal and two external communication patterns:
 
 **OpenAI-compatible REST (internal, agent-to-model):** All agents call their assigned vLLM inference endpoint using LangChain's `init_chat_model` with the `openai:` prefix and a `base_url` pointing to the appropriate vLLM KServe endpoint. Agents do not hold model references; the endpoint URL is injected via environment variable at pod start.
 
-**MCP protocol (agent-to-external-tools):** All interactions with external systems (GitHub, Jira, SonarQube, Jenkins, Kubernetes, Slack, Context7) flow through MCP servers running as UBI-based containers within the cluster. MCP is handled by `langchain-mcp-adapters`, which presents MCP tools as standard LangChain tools to the agent. Agents never call external APIs directly.
+**MCP protocol (agent-to-external-tools):** All interactions with external systems (GitHub, Jira, SonarQube, Jenkins, Slack, Context7) flow through MCP servers running as UBI-based containers within the cluster. The active MCP server set is `{github, jira, context7, sonarqube, jenkins, slack}`. MCP is handled by `langchain-mcp-adapters`, which presents MCP tools as standard LangChain tools to the agent. Agents never call external APIs directly.
 
-**GitOps (Infrastructure Agent → ArgoCD):** The Infrastructure Agent never applies manifests directly to the cluster. It commits manifest changes to the GitOps repository; ArgoCD detects the diff and reconciles. This provides a full audit trail for all infrastructure changes.
+**Built-in filesystem tools (agent-to-codebase):** Codebase search and file I/O use DeepAgents' built-in `grep`, `glob`, `read_file`, and `write_file` tools backed by `FilesystemBackend`. This replaces the previous Milvus-based semantic search approach. Agents using only built-in filesystem tools receive `tools=[]` (no MCP server connection) and still have full codebase access via the built-in tool set.
+
+**GitOps (Infrastructure Agent → ArgoCD):** The Infrastructure Agent never applies manifests directly to the cluster. It commits manifest changes via the GitHub MCP tool; ArgoCD detects the diff and reconciles. This provides a full audit trail for all infrastructure changes.
+
+<!-- enriched by architecture-docs skill, 2026-05-15 -->

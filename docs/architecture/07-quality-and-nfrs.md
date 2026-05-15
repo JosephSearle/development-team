@@ -34,7 +34,7 @@
 **Organisational constraints:**
 - Production deployments require explicit human approval via the HITL gate. Fully autonomous production deployment is not a permitted configuration.
 - All architectural decisions that affect system boundaries, model selection, or data residency require an ADR reviewed and accepted by the engineering lead before implementation.
-- <!-- TODO: Add any regulatory / compliance constraints applicable to your organisation (GDPR, SOC2, etc.) -->
+- No regulatory compliance framework (GDPR, SOC2, HIPAA, etc.) has been formally scoped for this system. If the system processes personal data or is submitted for compliance certification, a dedicated compliance review and updated ADR are required before production go-live.
 
 **Data residency constraints:**
 - All LangSmith traces, LangGraph state, and codebase embeddings must remain within the cluster. No trace data may be forwarded to LangSmith Cloud.
@@ -44,7 +44,7 @@
 
 ## Performance Targets
 
-<!-- TODO: Validate these targets against actual vLLM benchmarks on your GPU hardware before committing to SLAs -->
+<!-- Validate these targets against actual vLLM benchmarks on your GPU hardware before committing to SLAs. TBD values must be measured in staging before first production deployment. -->
 
 | Component | Metric | Target |
 |---|---|---|
@@ -54,7 +54,7 @@
 | vLLM Code (Qwen2.5-Coder-32B) | LoRA adapter swap time | < 2 sec |
 | vLLM Guardrail (Llama-Guard-3-8B) | End-to-end classification latency | < 500ms P95 |
 | Context7 MCP | Documentation query response time | < 3 sec P95 |
-| Vector store (Milvus) | Semantic search query latency | < 200ms P95 at 1M embeddings |
+| Built-in grep/glob (codebase search) | Live file search per agent task | No SLA — synchronous filesystem operation; bounded by workspace size |
 | Redis checkpoint write | State persistence latency | < 10ms P95 (Redis in-memory write) |
 
 ---
@@ -75,7 +75,9 @@ The following security controls are mandatory. All are architectural constraints
 
 ## Maintainability
 
-- New agent skills can be deployed without redeploying agent containers. The Skills Loader fetches from the skills Git repository at boot; a new skill is available after agents are restarted (or on next scheduled restart).
+- Agent skills are bundled as SKILL.md files within each agent's Python package (at `agents/<name>/src/<module>/skills/<skill-name>/SKILL.md`). DeepAgents ≥0.6.1 loads them via the `skills=` parameter at agent instantiation. Updating a skill requires a new package release and pod rollout, but no re-architecture of the agent.
 - New LoRA adapters can be added to the Code endpoint by uploading to ODF and updating the vLLM KServe InferenceService manifest. No model redeployment is required; vLLM loads adapters at request time.
 - LangGraph graph definitions are code — all node logic, routing rules, and HITL conditions are version-controlled and tested as part of the agent Python packages.
 - Every significant architectural change must be accompanied by an ADR. See [docs/architecture/adr/](adr/).
+
+<!-- enriched by architecture-docs skill, 2026-05-15 -->

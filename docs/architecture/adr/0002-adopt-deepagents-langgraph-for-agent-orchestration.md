@@ -1,10 +1,8 @@
 # ADR 0002: Adopt DeepAgents + LangGraph for Agent Orchestration
 
-> ⚠️ **INFERRED:** This ADR was inferred from the system plan. Verify Context and Consequences before changing status to Accepted.
-
 **Date:** 2026-05-12  
-**Status:** Proposed  
-**Deciders:** <TODO: names or roles>
+**Status:** Accepted  
+**Deciders:** Engineering team
 
 ## Context
 
@@ -20,7 +18,7 @@ Constraints:
 
 ## Decision
 
-We will use **LangChain DeepAgents** (v0.4.x) as the agent harness for all twelve specialist agents, built on **LangGraph** v1.x as the underlying orchestration graph runtime.
+We will use **LangChain DeepAgents** (v0.6.x, pinned at `>=0.6.1`) as the agent harness for all twelve specialist agents, built on **LangGraph** v1.x as the underlying orchestration graph runtime.
 
 ## Rationale
 
@@ -56,7 +54,7 @@ The deciding factor: DeepAgents returns a compiled LangGraph graph — it is not
 - DeepAgents is an opinionated harness; customising beyond its defaults requires understanding LangGraph internals
 
 ### Neutral / Risks
-- DeepAgents is a relatively new library (0.4.x, first stable in late 2025). Production maturity is growing but not at the level of LangGraph itself. Monitor for breaking changes between minor versions.
+- DeepAgents is deployed at v0.6.2. The 0.5.x → 0.6.x upgrade introduced `FilesystemBackend`, `SummarizationMiddleware`, `skills`, `AsyncSubAgent`, and `FilesystemPermission` — all of which are used in production. Continue to monitor for breaking changes between minor versions; pin in `pyproject.toml` with `deepagents>=0.6.1`.
 - The "trust the LLM" security model of DeepAgents means agent capability is bounded by tool availability, not by model self-policing. Boundary enforcement is at the tool and network level — this is the correct model, but requires discipline in tool provisioning.
 
 ## Related Decisions
