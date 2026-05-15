@@ -9,18 +9,18 @@
 | Store | Type | Technology | Data Owned | Shared? |
 |---|---|---|---|---|
 | LangGraph Checkpointer | Key-value / in-memory | Redis | LangGraph execution state snapshots — serialised graph state persisted per node transition | No — exclusively owned by the agent runtime |
-| Vector Store | Vector database | Milvus | Codebase semantic embeddings — chunks of source code indexed for similarity search | Read-shared across Code, Architecture, and Documentation Agents |
+| Vector Store | Vector database | Milvus | Reserved for future use; deployed in dev-team-platform namespace. Not used in the agent runtime path — live codebase search uses built-in grep/glob tools | Not shared with agents at runtime |
 | Object Storage | Object storage | ODF / Ceph (S3-compatible) | Model weights (Qwen3.5-72B, Qwen2.5-Coder-32B, Qwen2.5-14B, Llama-Guard-3-8B), LoRA adapter files, LangSmith trace archives | Read-shared across all vLLM endpoints; write-exclusive to ML Ops processes |
 | LangSmith Trace Store | Columnar / document | LangSmith internal (self-hosted) | Full execution traces: LLM call inputs/outputs, tool invocations, latency, token counts | Read-shared via LangSmith UI and API; no agent writes directly |
-| Skills Repository | Git object store | Internal Git (Gitea or GitLab) | Skill bundles (prompt extensions + tool configs) tagged per agent role | Read-shared across all agents via Skills Loader; write-exclusive to engineers |
+| Agent Skills | Filesystem | SKILL.md files bundled within each agent Python package | Per-agent skill definitions: system prompt extensions and domain expertise; loaded at agent boot by DeepAgents ≥0.6.1 `skills=` parameter | No sharing — each agent has its own skill bundle |
 
 ---
 
 ## Data Ownership Notes
 
-Each data store has a single owning process. Agents that read shared stores do so through defined interfaces (Milvus SDK, LangSmith SDK, Git clone/fetch) and may not write to stores they do not own. The principle of least privilege applies: agent service accounts are granted read-only access to shared stores.
+Each data store has a single owning process. Agents that read shared stores do so through defined interfaces and may not write to stores they do not own. The principle of least privilege applies: agent service accounts are granted read-only access to shared stores.
 
-The Vector Store is read-shared across three agents; however, writes to it (embedding new code) are performed exclusively by a scheduled indexing job, not by agents at runtime. This prevents concurrent write contention and ensures embedding consistency.
+The Vector Store (Milvus) is deployed in the `dev-team-platform` namespace as a StatefulSet but is not connected to any agent at runtime. Agents perform codebase search using DeepAgents' built-in `grep` and `glob` tools against live filesystem paths via `FilesystemBackend`. This avoids the pre-indexing pipeline that was required in the original design and ensures search results are always current.
 
 ---
 
@@ -57,7 +57,7 @@ flowchart LR
   ModelCall --> ToolCall["MCP Tool Call<br/>(GitHub / Jira / SonarQube / etc.)"]
   ToolCall --> GuardOut["Output Guardrail<br/>(pre-execution screening)"]
   GuardOut --> State
-  AgentLoop --> VecSearch[("Vector Store<br/>Milvus — codebase index")]
+  AgentLoop --> FileSearch["Built-in grep/glob<br/>live codebase search"]
   AgentLoop --> ObjStore[("Object Storage<br/>LoRA adapters")]
   State --> Trace[("LangSmith<br/>Trace Store")]
   State --> Output["Task Output<br/>(PR created, Jira updated, Slack notified)"]
@@ -88,4 +88,8 @@ All transitions carry the LangSmith `run_id` as a correlation field, linking the
 
 ## Schema and Migration Management
 
-The LangGraph Checkpointer data structure in Redis is managed by the `langgraph-checkpoint-redis` library and should not be modified directly. Redis key TTL and eviction policy must be configured to `noeviction` (or `allkeys-lru` with sufficient memory) to prevent in-flight graph state being silently dropped. The Milvus collection schema (embedding dimensions, metadata fields) is defined in `infra/milvus/schema.py`; schema changes require a collection migration. The Infrastructure Agent applies collection changes as part of the deployment workflow.
+The LangGraph Checkpointer data structure in Redis is managed by the `langgraph-checkpoint-redis` library and should not be modified directly. Redis key TTL and eviction policy must be configured to `noeviction` (or `allkeys-lru` with sufficient memory) to prevent in-flight graph state being silently dropped.
+
+The Milvus StatefulSet is deployed in the `dev-team-platform` namespace as a platform resource. No agent schema or migration is required unless a future decision is made to re-introduce Milvus into the agent runtime; if that happens, an ADR must be raised first.
+
+<!-- enriched by architecture-docs skill, 2026-05-15 -->
