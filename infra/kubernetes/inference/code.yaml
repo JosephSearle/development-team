@@ -1,0 +1,40 @@
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: vllm-code
+  namespace: dev-team-inference
+  labels:
+    team: dev-team
+    tier: code
+  annotations:
+    serving.kserve.io/deploymentMode: RawDeployment
+spec:
+  predictor:
+    model:
+      modelFormat:
+        name: vLLM
+      storageUri: "s3://dev-team-models/Qwen2.5-Coder-32B-Instruct"
+      args:
+        - --model=/mnt/models/Qwen2.5-Coder-32B-Instruct
+        - --enable-lora
+        - --lora-modules
+        - go=/mnt/adapters/go-lora
+        - typescript=/mnt/adapters/typescript-lora
+        - javascript=/mnt/adapters/javascript-lora
+        - java=/mnt/adapters/java-lora
+        - python=/mnt/adapters/python-lora
+        - --max-loras=5
+        - --enable-prefix-caching
+        - --max-model-len=131072
+        - --dtype=bfloat16
+      resources:
+        requests:
+          cpu: "8"
+          memory: "80Gi"
+          nvidia.com/gpu: "1"
+        limits:
+          cpu: "16"
+          memory: "80Gi"
+          nvidia.com/gpu: "1"
+      nodeSelector:
+        nvidia.com/gpu.product: A100-SXM4-80GB

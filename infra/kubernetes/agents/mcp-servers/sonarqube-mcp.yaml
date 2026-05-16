@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sonarqube-mcp
+  namespace: dev-team-agents
+  labels:
+    app: sonarqube-mcp
+    team: dev-team
+    component: mcp-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sonarqube-mcp
+  template:
+    metadata:
+      labels:
+        app: sonarqube-mcp
+        team: dev-team
+        component: mcp-server
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: "sonarqube-mcp-role"
+        vault.hashicorp.com/agent-inject-secret-token: "secret/data/dev-team/mcp/sonarqube"
+    spec:
+      securityContext:
+        runAsUser: 1001
+        runAsNonRoot: true
+        fsGroup: 0
+      containers:
+        - name: sonarqube-mcp
+          image: registry.redhat.io/rh-ee-mcp/sonarqube-mcp-server:latest
+          ports:
+            - containerPort: 3000
+              name: mcp
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+          envFrom:
+            - secretRef:
+                name: sonarqube-mcp-credentials
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sonarqube-mcp
+  namespace: dev-team-agents
+  labels:
+    app: sonarqube-mcp
+spec:
+  selector:
+    app: sonarqube-mcp
+  ports:
+    - name: mcp
+      port: 3000
+      targetPort: 3000

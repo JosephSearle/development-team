@@ -1,0 +1,250 @@
+# Orchestrator: read-only view of pods in dev-team-agents
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: orchestrator-role
+  namespace: dev-team-agents
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "pods/log"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: orchestrator-rolebinding
+  namespace: dev-team-agents
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: orchestrator-role
+subjects:
+  - kind: ServiceAccount
+    name: orchestrator-sa
+    namespace: dev-team-agents
+---
+# CI/CD Agent: get/list/watch/create/update Pods + Jobs in dev-team-agents
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: cicd-agent-role
+  namespace: dev-team-agents
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "pods/log"]
+    verbs: ["get", "list", "watch", "create", "update", "patch"]
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["get", "list", "watch", "create", "update", "patch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: cicd-agent-rolebinding
+  namespace: dev-team-agents
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: cicd-agent-role
+subjects:
+  - kind: ServiceAccount
+    name: cicd-agent-sa
+    namespace: dev-team-agents
+---
+# Infrastructure Agent: read/write in dev-team-agents + dev-team-inference
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: infrastructure-agent-role
+  namespace: dev-team-agents
+rules:
+  - apiGroups: ["", "apps", "batch"]
+    resources: ["pods", "deployments", "services", "configmaps"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: infrastructure-agent-rolebinding-agents
+  namespace: dev-team-agents
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: infrastructure-agent-role
+subjects:
+  - kind: ServiceAccount
+    name: infrastructure-agent-sa
+    namespace: dev-team-agents
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: infrastructure-agent-inference-role
+  namespace: dev-team-inference
+rules:
+  - apiGroups: ["", "apps", "serving.kserve.io"]
+    resources: ["pods", "deployments", "inferenceservices"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: infrastructure-agent-rolebinding-inference
+  namespace: dev-team-inference
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: infrastructure-agent-inference-role
+subjects:
+  - kind: ServiceAccount
+    name: infrastructure-agent-sa
+    namespace: dev-team-agents
+---
+# Security Agent: read-only across all dev-team-* namespaces
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: security-agent-read-role
+  namespace: dev-team-agents
+rules:
+  - apiGroups: ["", "apps", "batch", "networking.k8s.io"]
+    resources: ["*"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: security-agent-rolebinding-agents
+  namespace: dev-team-agents
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: security-agent-read-role
+subjects:
+  - kind: ServiceAccount
+    name: security-agent-sa
+    namespace: dev-team-agents
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: security-agent-read-role
+  namespace: dev-team-inference
+rules:
+  - apiGroups: ["", "apps", "serving.kserve.io"]
+    resources: ["*"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: security-agent-rolebinding-inference
+  namespace: dev-team-inference
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: security-agent-read-role
+subjects:
+  - kind: ServiceAccount
+    name: security-agent-sa
+    namespace: dev-team-agents
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: security-agent-read-role
+  namespace: dev-team-platform
+rules:
+  - apiGroups: ["", "apps"]
+    resources: ["*"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: security-agent-rolebinding-platform
+  namespace: dev-team-platform
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: security-agent-read-role
+subjects:
+  - kind: ServiceAccount
+    name: security-agent-sa
+    namespace: dev-team-agents
+---
+# Incident Response Agent: read-only + pod log access across dev-team-* namespaces
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: incident-response-agent-role
+  namespace: dev-team-agents
+rules:
+  - apiGroups: ["", "apps", "batch"]
+    resources: ["pods", "pods/log", "deployments", "events"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: incident-response-agent-rolebinding-agents
+  namespace: dev-team-agents
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: incident-response-agent-role
+subjects:
+  - kind: ServiceAccount
+    name: incident-response-agent-sa
+    namespace: dev-team-agents
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: incident-response-agent-role
+  namespace: dev-team-inference
+rules:
+  - apiGroups: ["", "apps", "serving.kserve.io"]
+    resources: ["pods", "pods/log", "inferenceservices", "events"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: incident-response-agent-rolebinding-inference
+  namespace: dev-team-inference
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: incident-response-agent-role
+subjects:
+  - kind: ServiceAccount
+    name: incident-response-agent-sa
+    namespace: dev-team-agents
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: incident-response-agent-role
+  namespace: dev-team-platform
+rules:
+  - apiGroups: ["", "apps"]
+    resources: ["pods", "pods/log", "events"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: incident-response-agent-rolebinding-platform
+  namespace: dev-team-platform
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: incident-response-agent-role
+subjects:
+  - kind: ServiceAccount
+    name: incident-response-agent-sa
+    namespace: dev-team-agents

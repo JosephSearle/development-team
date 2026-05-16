@@ -1,0 +1,31 @@
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: vllm-guardrail
+  namespace: dev-team-inference
+  labels:
+    team: dev-team
+    tier: guardrail
+  annotations:
+    serving.kserve.io/deploymentMode: RawDeployment
+spec:
+  predictor:
+    model:
+      modelFormat:
+        name: vLLM
+      storageUri: "s3://dev-team-models/Llama-Guard-3-8B"
+      args:
+        - --model=/mnt/models/Llama-Guard-3-8B
+        - --max-model-len=8192
+        - --dtype=float16
+      resources:
+        requests:
+          cpu: "4"
+          memory: "16Gi"
+          nvidia.com/gpu: "1"
+        limits:
+          cpu: "8"
+          memory: "16Gi"
+          nvidia.com/gpu: "1"
+      nodeSelector:
+        nvidia.com/gpu.product: Tesla-T4

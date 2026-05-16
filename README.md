@@ -1,7 +1,7 @@
 # Development Team
 
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue?logo=python&logoColor=white)](https://www.python.org/downloads/release/python-3120/)
-[![DeepAgents 0.4.2](https://img.shields.io/badge/deepagents-0.4.2-blueviolet)](https://github.com/langchain-ai/deepagents)
+[![DeepAgents 0.6.2](https://img.shields.io/badge/deepagents-0.6.2-blueviolet)](https://github.com/langchain-ai/deepagents)
 [![LangGraph v1](https://img.shields.io/badge/langgraph-v1-green)](https://github.com/langchain-ai/langgraph)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -14,7 +14,7 @@ Autonomous twelve-agent AI system that writes, tests, reviews, and deploys code 
 - **Human-in-the-loop by design** — production deployments, main-branch merges, and architectural decisions require explicit human approval via LangGraph interrupt nodes; everything else runs autonomously
 - **Self-hosted, data-residency safe** — all models (Qwen3.5-72B, Qwen2.5-Coder-32B, Qwen2.5-14B, Llama-Guard-3-8B) and observability (LangSmith) run inside your Red Hat OpenShift AI cluster; no data leaves the boundary
 - **Six-layer prompt injection defence** — Llama Guard 3 input screening, system prompt hardening, tool-level RBAC, pre-execution output guardrail, HITL gate, and an immutable LangSmith audit trail
-- **MCP for every external system** — GitHub, Jira, SonarQube, Jenkins, Slack, ArgoCD, and HashiCorp Vault are all connected via Red Hat UBI-based MCP server containers; no bespoke API integration code
+- **MCP for every external system** — GitHub, Jira, SonarQube, Jenkins, Slack, and Context7 are all connected via MCP server containers; codebase search uses DeepAgents' built-in `grep`/`glob` tools on live files — no pre-indexing pipeline, no bespoke API integration code
 
 ## Table of Contents
 
@@ -48,7 +48,7 @@ flowchart TD
     subgraph Eng["Engineering Domain"]
         GitAgent["Git Agent<br/>(Qwen2.5-14B)"]
         CICDAgent["CI/CD Agent<br/>(Qwen2.5-14B)"]
-        SecAgent["Security Agent<br/>(Qwen3.5-72B)"]
+        SecAgent["Security Agent<br/>(Qwen2.5-14B + Llama-Guard-3-8B)"]
         InfraAgent["Infrastructure Agent<br/>(Qwen2.5-14B)"]
     end
 
@@ -61,7 +61,6 @@ flowchart TD
 
     LangSmith["📊 LangSmith (Self-hosted)"]
     Redis["⚡ Redis Checkpointer"]
-    Milvus["🔍 Milvus Vector Store"]
 
     Human -->|"Task / Jira ticket"| Orch
     Orch --> HITL
@@ -71,7 +70,6 @@ flowchart TD
     HITL -->|"Approved — high-risk ops only"| Dev
     HITL -->|"Approved — high-risk ops only"| Eng
     Orch <--> Redis
-    Dev <--> Milvus
     Orch -.->|"Traces"| LangSmith
 ```
 
@@ -110,7 +108,7 @@ uv sync
 For development (includes linting, type-checking, and test dependencies):
 
 ```bash
-uv sync --extra dev
+uv sync --locked --all-extras --dev
 ```
 
 > **Note:** This repository contains the agent definitions, orchestration logic, and skills configuration.
@@ -160,8 +158,6 @@ All configuration is supplied via environment variables. In production, these ar
 | `LANGCHAIN_API_KEY` | ✅ | LangSmith API key |
 | `LANGCHAIN_PROJECT` | ✅ | LangSmith project name, e.g. `development-team-production` |
 | `REDIS_URL` | ✅ | Redis Sentinel URL for the LangGraph checkpointer, e.g. `redis://redis-sentinel.dev-team-agents.svc.cluster.local:26379/0` |
-| `MILVUS_URI` | ✅ | Milvus gRPC endpoint for codebase semantic search, e.g. `milvus.dev-team-agents.svc.cluster.local:19530` |
-| `SKILLS_REPO_URL` | ✅ | HTTPS URL of the skills Git repository loaded at agent boot |
 | `VAULT_ADDR` | ✅ | HashiCorp Vault address (injected automatically in production by Vault Agent Injector) |
 | `HITL_APPROVAL_WEBHOOK` | ✅ | Webhook URL the HITL Gate calls to request human approval (Slack or custom UI) |
 | `GITHUB_MCP_URL` | ✅ | URL of the GitHub MCP server container |
@@ -279,7 +275,7 @@ For the full observability design, security audit trail, and metrics definitions
 
 ## Deployment
 
-The system runs on **Red Hat OpenShift AI 2.x** with vLLM served via KServe `InferenceService` resources, state persisted in Redis Sentinel, and codebase embeddings stored in Milvus. Agent pods scale automatically via KEDA based on LangSmith queue depth.
+The system runs on **Red Hat OpenShift AI 2.x** with vLLM served via KServe `InferenceService` resources and state persisted in Redis Sentinel. Agent pods scale automatically via KEDA based on LangSmith queue depth.
 
 See [`docs/architecture/05-deployment.md`](docs/architecture/05-deployment.md) for the complete deployment guide, including:
 
@@ -287,8 +283,8 @@ See [`docs/architecture/05-deployment.md`](docs/architecture/05-deployment.md) f
 - KServe `InferenceService` definitions for all four model tiers (Reasoning, Code, Utility, Guardrail)
 - Multi-LoRA adapter configuration for the Code tier (Go, TypeScript, Java, Python, test-expert adapters)
 - Redis Sentinel HA configuration with `noeviction` policy and AOF persistence
-- Milvus StatefulSet with etcd and ODF backing storage
 - KEDA `ScaledObject` definitions for agent pod autoscaling
+- Milvus StatefulSet (platform namespace — reserved for future use; not in the agent runtime path)
 - ArgoCD GitOps model — the Infrastructure Agent commits manifests; ArgoCD reconciles
 
 For the architecture overview and design decisions see [`docs/architecture/`](docs/architecture/).
@@ -298,7 +294,7 @@ For the architecture overview and design decisions see [`docs/architecture/`](do
 Contributions are welcome. To get started:
 
 1. Fork the repository and create a branch from `main`
-2. Install development dependencies: `uv sync --extra dev`
+2. Install development dependencies: `uv sync --locked --all-extras --dev`
 3. Run the test suite to confirm everything passes: `uv run pytest`
 4. Run linting and type checks: `uv run ruff check . && uv run mypy .`
 5. Open a pull request with a clear description of the change
@@ -309,5 +305,4 @@ Open items and known technical debt are tracked in [`docs/architecture/.checklis
 
 ## License
 
-<!-- TODO: Add a LICENSE file to the repository root. The identifier below assumes MIT; update if different. -->
 [MIT](LICENSE) © 2026 Joseph Searle

@@ -1,0 +1,114 @@
+# Milvus standalone — dev-team-platform namespace.
+# No agent-facing Service: agents cannot reach Milvus from dev-team-agents
+# (per impl plan §7: "Milvus StatefulSet moved to dev-team-platform with no agent-facing Service").
+# Indexing jobs within dev-team-platform use the internal headless service directly.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: milvus
+  namespace: dev-team-platform
+  labels:
+    app: milvus
+    team: dev-team
+spec:
+  serviceName: milvus-internal
+  replicas: 1
+  selector:
+    matchLabels:
+      app: milvus
+  template:
+    metadata:
+      labels:
+        app: milvus
+        team: dev-team
+    spec:
+      securityContext:
+        runAsUser: 1001
+        runAsNonRoot: true
+        fsGroup: 1001
+      initContainers:
+        - name: etcd
+          image: registry.access.redhat.com/ubi9/etcd:latest
+          command: ["etcd", "--data-dir=/etcd-data", "--listen-client-urls=http://0.0.0.0:2379", "--advertise-client-urls=http://localhost:2379"]
+          volumeMounts:
+            - name: etcd-data
+              mountPath: /etcd-data
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+      containers:
+        - name: milvus
+          image: milvusdb/milvus:v2.4-latest
+          args: ["milvus", "run", "standalone"]
+          ports:
+            - containerPort: 19530
+              name: grpc
+            - containerPort: 9091
+              name: metrics
+          resources:
+            requests:
+              cpu: "2"
+              memory: "4Gi"
+            limits:
+              cpu: "8"
+              memory: "16Gi"
+          env:
+            - name: ETCD_ENDPOINTS
+              value: "localhost:2379"
+            - name: MINIO_ADDRESS
+              value: "milvus-minio.dev-team-platform.svc.cluster.local:9000"
+          volumeMounts:
+            - name: milvus-data
+              mountPath: /var/lib/milvus
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 9091
+            initialDelaySeconds: 60
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 9091
+            initialDelaySeconds: 30
+            periodSeconds: 10
+  volumeClaimTemplates:
+    - metadata:
+        name: milvus-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 100Gi
+    - metadata:
+        name: etcd-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi
+---
+# Internal headless service — accessible only within dev-team-platform
+apiVersion: v1
+kind: Service
+metadata:
+  name: milvus-internal
+  namespace: dev-team-platform
+  labels:
+    app: milvus
+spec:
+  clusterIP: None
+  selector:
+    app: milvus
+  ports:
+    - name: grpc
+      port: 19530
+      targetPort: 19530
+    - name: metrics
+      port: 9091
+      targetPort: 9091

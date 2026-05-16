@@ -22,14 +22,12 @@ C4Component
     Component(hitl_gate, "Human-in-the-Loop Gate", "LangGraph interrupt node", "Pauses graph execution and awaits human approval for high-risk operations: production deploy, architecture decisions, main-branch merges")
     Component(sub_agent_spawner, "Sub-Agent Spawner", "DeepAgents task tool", "Instantiates specialist agent sub-graphs with isolated context windows; collects structured results and merges them back into master state")
     Component(state_manager, "State Manager", "LangGraph checkpointer / Redis", "Persists full graph state at every transition; enables failure recovery, time-travel debugging, and mid-task resume")
-    Component(context_summariser, "Context Summariser", "LangGraph node / Qwen3.5-72B", "Auto-summarises context when the conversation window approaches the model's limit; large outputs are persisted to filesystem")
-    Component(skills_injector, "Skills Injector", "Skills Loader", "Reads orchestrator-tagged skills from the skills repository at boot and injects them as system prompt extensions and additional tools")
+    Component(context_summariser, "Context Summariser", "SummarizationMiddleware / Qwen3.5-72B", "Auto-summarises context when the conversation window approaches the model's limit; large outputs are persisted to filesystem via FilesystemBackend")
   }
 
   ContainerDb(redis_checkpointer, "LangGraph Checkpointer", "Redis", "Persists graph state snapshots")
   Container(vllm_reason, "vLLM — Reasoning", "Qwen3.5-72B", "")
   Container(vllm_guard, "vLLM — Guardrail", "Llama-Guard-3-8B", "")
-  Container(skills_repo, "Skills Repository", "Git", "")
 
   Rel(input_guard, vllm_guard, "Classifies input safety", "REST")
   Rel(input_guard, task_planner, "Passes safe input", "LangGraph state")
@@ -41,7 +39,6 @@ C4Component
   Rel(sub_agent_spawner, state_manager, "Records delegation and result", "LangGraph state")
   Rel(state_manager, redis_checkpointer, "Persists snapshot", "TCP / Redis protocol")
   Rel(context_summariser, vllm_reason, "LLM call for summarisation", "REST")
-  Rel(skills_injector, skills_repo, "Fetches tagged skills", "Git / HTTPS")
 ```
 
 ### Internal Dependency Rules
@@ -50,6 +47,7 @@ C4Component
 - The Human-in-the-Loop Gate may only be bypassed by conditional edges that have been explicitly whitelisted in the router configuration.
 - The Task Planner must not call any external tool directly. All external actions must flow through a specialist sub-agent.
 - State snapshots are taken before and after every node execution. A node failure leaves the previous snapshot intact; the graph resumes from that snapshot on retry.
+- The Context Summariser uses `SummarizationMiddleware` from DeepAgents (≥0.6.1) backed by `FilesystemBackend`. It does not rely on a separate summarisation pipeline.
 
 ---
 
@@ -67,7 +65,7 @@ C4Component
       Component(context7_client, "Context7 Client", "MCP tool / langchain-mcp-adapters", "Queries current library documentation before writing code against any external API")
       Component(code_writer, "Code Writer", "LangGraph node / Qwen2.5-Coder-32B + LoRA", "Writes implementation code to pass failing tests; language selected by LoRA adapter tag")
       Component(code_refactor, "Code Refactorer", "LangGraph node / Qwen2.5-Coder-32B", "Refactors code for quality once tests pass; does not change behaviour")
-      Component(vec_search, "Codebase Search", "Milvus SDK", "Semantic search over existing codebase before writing new implementations; prevents duplication")
+      Component(code_search, "Codebase Search", "DeepAgents built-in grep/glob", "Searches existing codebase using built-in grep and glob tools against live files; prevents duplication without pre-indexing")
       Component(code_shell, "Shell Executor", "DeepAgents execute tool / sandboxed container", "Runs formatters (ruff, gofmt), linters, and build commands in an isolated container")
     }
 
@@ -79,7 +77,6 @@ C4Component
     }
   }
 
-  ContainerDb(vector_db, "Vector Store", "Milvus", "")
   Container(vllm_code, "vLLM — Code", "Qwen2.5-Coder-32B + LoRA", "")
   Container(git_agent, "Git Agent", "Python / DeepAgents", "")
   Container(security_agent, "Security Agent", "Python / DeepAgents", "")
@@ -90,8 +87,7 @@ C4Component
   Rel(test_runner, code_writer, "Signals: tests failing — implement", "LangGraph state")
   Rel(context7_client, context7, "Fetch library docs", "MCP / REST")
   Rel(code_writer, context7_client, "Requests docs before coding", "internal")
-  Rel(code_writer, vec_search, "Searches for existing implementations", "internal")
-  Rel(vec_search, vector_db, "Semantic similarity query", "gRPC / Milvus SDK")
+  Rel(code_writer, code_search, "Searches for existing implementations", "internal")
   Rel(code_writer, vllm_code, "LLM call — write implementation", "REST")
   Rel(code_shell, test_runner, "Build output fed to test run", "LangGraph state")
   Rel(test_runner, coverage_checker, "Passes test results", "LangGraph state")
@@ -113,3 +109,5 @@ The state machine enforces the Red → Green → Refactor sequence structurally 
 4. **Gate:** Security Agent scans the diff; Code Review Agent reviews; Git Agent commits and creates a PR.
 
 A task does not exit the Development Domain until it is Green, Refactored, scanned, reviewed, and committed.
+
+<!-- enriched by architecture-docs skill, 2026-05-15 -->

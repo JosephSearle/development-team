@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: slack-mcp
+  namespace: dev-team-agents
+  labels:
+    app: slack-mcp
+    team: dev-team
+    component: mcp-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: slack-mcp
+  template:
+    metadata:
+      labels:
+        app: slack-mcp
+        team: dev-team
+        component: mcp-server
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: "slack-mcp-role"
+        vault.hashicorp.com/agent-inject-secret-token: "secret/data/dev-team/mcp/slack"
+    spec:
+      securityContext:
+        runAsUser: 1001
+        runAsNonRoot: true
+        fsGroup: 0
+      containers:
+        - name: slack-mcp
+          image: registry.redhat.io/rh-ee-mcp/slack-mcp-server:latest
+          ports:
+            - containerPort: 3000
+              name: mcp
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+          envFrom:
+            - secretRef:
+                name: slack-mcp-credentials
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: slack-mcp
+  namespace: dev-team-agents
+  labels:
+    app: slack-mcp
+spec:
+  selector:
+    app: slack-mcp
+  ports:
+    - name: mcp
+      port: 3000
+      targetPort: 3000

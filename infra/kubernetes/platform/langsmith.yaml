@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: langsmith
+  namespace: dev-team-platform
+  labels:
+    app: langsmith
+    team: dev-team
+spec:
+  serviceName: langsmith
+  replicas: 1
+  selector:
+    matchLabels:
+      app: langsmith
+  template:
+    metadata:
+      labels:
+        app: langsmith
+        team: dev-team
+    spec:
+      securityContext:
+        runAsUser: 1001
+        runAsNonRoot: true
+        fsGroup: 1001
+      containers:
+        - name: langsmith
+          image: registry.internal/dev-team/langsmith:latest
+          ports:
+            - containerPort: 1984
+              name: http
+          resources:
+            requests:
+              cpu: "1"
+              memory: "2Gi"
+            limits:
+              cpu: "4"
+              memory: "8Gi"
+          env:
+            - name: LANGCHAIN_TRACING_V2
+              value: "true"
+          volumeMounts:
+            - name: langsmith-data
+              mountPath: /data
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          livenessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: 1984
+            initialDelaySeconds: 60
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: 1984
+            initialDelaySeconds: 30
+            periodSeconds: 10
+  volumeClaimTemplates:
+    - metadata:
+        name: langsmith-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 50Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: langsmith
+  namespace: dev-team-platform
+  labels:
+    app: langsmith
+spec:
+  selector:
+    app: langsmith
+  ports:
+    - name: http
+      port: 1984
+      targetPort: 1984
